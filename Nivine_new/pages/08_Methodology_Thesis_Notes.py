@@ -1,4 +1,4 @@
-"""Methodology and thesis notes page."""
+"""Methodology and Capstone notes page."""
 
 from __future__ import annotations
 
