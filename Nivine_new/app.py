@@ -1,4 +1,4 @@
-"""Executive overview page for the greenhouse thesis dashboard."""
+"""Executive overview page for the greenhouse capstone dashboard."""
 
 from __future__ import annotations
 
