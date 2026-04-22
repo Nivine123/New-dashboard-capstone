@@ -1,0 +1,35 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook checkpoints (safe to ignore)
+.ipynb_checkpoints/
+
+# Virtual environments
+.env
+.venv/
+venv/
+ENV/
+
+# Environment variables
+.env.*
+
+# Streamlit secrets (important)
+.streamlit/secrets.toml
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor folders
+.vscode/
+.idea/
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
