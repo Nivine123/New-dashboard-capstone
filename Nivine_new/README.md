@@ -1,4 +1,4 @@
-# Greenhouse Systems Thesis Dashboard
+# Greenhouse Systems Capstone Dashboard
 
 A multi-page Streamlit application for a Masters in Data Analytics thesis focused on greenhouse system evaluation. The dashboard combines business intelligence, operational analytics, and data-quality-aware interpretation using the greenhouse observation dataset in this workspace.
 
