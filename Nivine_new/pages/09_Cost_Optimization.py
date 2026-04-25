@@ -25,20 +25,7 @@ The goal is to identify which systems create the highest cost pressure and why.
 # -----------------------------
 @st.cache_data(show_spinner=False)
 def load_cost_data() -> pd.DataFrame:
-    possible_files = [
-        "greenhouse_systems_cleaned(8).csv",
-        "greenhouse_systems_cleaned.csv",
-        "greenhouse_systems_cleaned(2).csv",
-    ]
-
-    for file in possible_files:
-        try:
-            return pd.read_csv(file)
-        except FileNotFoundError:
-            continue
-
-    st.error("Could not find greenhouse cleaned dataset.")
-    st.stop()
+    return pd.read_csv("greenhouse_systems_cleaned.csv")
 
 
 df = load_cost_data()
