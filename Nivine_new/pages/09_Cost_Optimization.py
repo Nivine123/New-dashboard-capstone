@@ -23,9 +23,18 @@ The goal is to identify which systems create the highest cost pressure and why.
 # -----------------------------
 # Load data
 # -----------------------------
+from pathlib import Path
+
 @st.cache_data(show_spinner=False)
 def load_cost_data() -> pd.DataFrame:
-    return pd.read_csv("greenhouse_systems_cleaned.csv")
+    base_path = Path(__file__).resolve().parent.parent
+    data_path = base_path / "greenhouse_systems_cleaned.csv"
+
+    if not data_path.exists():
+        st.error(f"Data file not found: {data_path}")
+        st.stop()
+
+    return pd.read_csv(data_path)
 
 
 df = load_cost_data()
