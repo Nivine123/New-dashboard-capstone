@@ -462,7 +462,7 @@ high_cost_high_risk = summary[
 if not high_cost_high_risk.empty:
     systems = ", ".join(high_cost_high_risk["system_name"].tolist())
     recommendations.append(
-        f"Prioritize **{systems}** for cost and risk reduction because they show both high cost burden and elevated operational risk."
+        f"Prioritize **{systems}** for cost and risk reduction because they show both high cost burden and elevated operational risk. These systems should be the primary target for operational improvement due to their high cost and risk."
     )
 
 for _, row in summary.iterrows():
