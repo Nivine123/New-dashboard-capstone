@@ -173,11 +173,17 @@ if not warning_rows.empty:
         st.warning(f"{row['system']}: {row['efficiency_warning']}")
 
 viz_left, viz_right = st.columns(2, gap="large")
-with viz_left:
-    st.plotly_chart(score_bar_chart(scorecard), use_container_width=True)
-with viz_right:
-    st.plotly_chart(risk_confidence_scatter(scorecard), use_container_width=True)
 
+with viz_left:
+    fig1 = score_bar_chart(scorecard)
+    fig1.update_layout(title="Multi-Dimensional System Performance Comparison")
+    st.plotly_chart(fig1, use_container_width=True)
+
+with viz_right:
+    fig2 = risk_confidence_scatter(scorecard)
+    fig2.update_layout(title="Risk vs Confidence: Reliability-Aware System Evaluation")
+    st.plotly_chart(fig2, use_container_width=True)
+    
 st.markdown("### Can we trust this?")
 st.dataframe(trust_matrix, use_container_width=True, hide_index=True)
 
