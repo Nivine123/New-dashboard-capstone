@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import streamlit as st
 
-from utils.charts import risk_confidence_scatter, score_bar_chart
+from utils.charts import (
+    risk_confidence_scatter,
+    score_bar_chart,
+    score_radar_chart,
+    system_score_heatmap,
+)
 from utils.data_loader import load_cleaning_outputs
 from utils.metrics import (
     build_trust_matrix,
@@ -26,6 +31,7 @@ from utils.ui import (
     build_page_context,
     render_badge,
     render_callout,
+    render_chart_conclusion,
     render_comparability_note,
     render_hero,
     render_metric_card,
@@ -165,8 +171,30 @@ st.markdown(
 chart_left, chart_right = st.columns(2, gap="large")
 with chart_left:
     st.plotly_chart(score_bar_chart(scorecard), use_container_width=True)
+    render_chart_conclusion(
+        "A grouped score comparison across efficiency, risk, stability, workload, and confidence.",
+        "The strongest system depends on the dimension, so the dashboard should be read as a balanced decision view rather than a single raw ranking.",
+    )
 with chart_right:
     st.plotly_chart(risk_confidence_scatter(scorecard), use_container_width=True)
+    render_chart_conclusion(
+        "Each system's operational risk score plotted against the confidence score, with point size showing observation volume.",
+        "Systems in the upper-right require careful interpretation: they have enough evidence to make their risks visible, not necessarily worse operations in every context.",
+    )
+
+profile_left, profile_right = st.columns(2, gap="large")
+with profile_left:
+    st.plotly_chart(score_radar_chart(scorecard), use_container_width=True)
+    render_chart_conclusion(
+        "A radar profile of the main decision dimensions for each greenhouse system.",
+        "The most useful operating choice is the system with the best shape for the decision goal, not just the highest score in one metric.",
+    )
+with profile_right:
+    st.plotly_chart(system_score_heatmap(scorecard), use_container_width=True)
+    render_chart_conclusion(
+        "A compact heatmap of the same score dimensions by system.",
+        "Darker cells quickly identify strengths and pressure points that deserve deeper page-level review.",
+    )
 
 st.markdown("### Top findings")
 badge_left, badge_mid, badge_right, badge_far = st.columns(4, gap="small")

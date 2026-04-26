@@ -374,3 +374,281 @@ def completeness_heatmap(completeness: pd.DataFrame) -> go.Figure:
     )
     fig.update_layout(title="Field completeness by system", xaxis_title="", yaxis_title="")
     return _base_layout(fig, height=420)
+
+
+def pipeline_flow_chart(
+    cleaned_rows: int,
+    validation_rows: int = 0,
+    quality_rows: int = 0,
+    review_rows: int = 0,
+    dictionary_rows: int = 0,
+    has_metadata: bool = False,
+) -> go.Figure:
+    """Show how cleaning outputs feed the deployed analytics app."""
+
+    labels = [
+        "Raw workbook",
+        "Cleaning notebook",
+        "cleaned_data.csv",
+        "validation_report.csv",
+        "data_quality_summary.csv",
+        "rows_needing_review.csv",
+        "data_dictionary.csv",
+        "cleaning_metadata.json",
+        "Streamlit analytics app",
+    ]
+    node = {label: index for index, label in enumerate(labels)}
+    rows = max(int(cleaned_rows), 1)
+
+    sources = [
+        node["Raw workbook"],
+        node["Cleaning notebook"],
+        node["Cleaning notebook"],
+        node["Cleaning notebook"],
+        node["Cleaning notebook"],
+        node["Cleaning notebook"],
+        node["Cleaning notebook"],
+        node["cleaned_data.csv"],
+        node["validation_report.csv"],
+        node["data_quality_summary.csv"],
+        node["rows_needing_review.csv"],
+        node["data_dictionary.csv"],
+        node["cleaning_metadata.json"],
+    ]
+    targets = [
+        node["Cleaning notebook"],
+        node["cleaned_data.csv"],
+        node["validation_report.csv"],
+        node["data_quality_summary.csv"],
+        node["rows_needing_review.csv"],
+        node["data_dictionary.csv"],
+        node["cleaning_metadata.json"],
+        node["Streamlit analytics app"],
+        node["Streamlit analytics app"],
+        node["Streamlit analytics app"],
+        node["Streamlit analytics app"],
+        node["Streamlit analytics app"],
+        node["Streamlit analytics app"],
+    ]
+    values = [
+        rows,
+        rows,
+        max(int(validation_rows), 1),
+        max(int(quality_rows), 1),
+        max(int(review_rows), 1),
+        max(int(dictionary_rows), 1),
+        1 if has_metadata else 0.5,
+        rows,
+        max(int(validation_rows), 1),
+        max(int(quality_rows), 1),
+        max(int(review_rows), 1),
+        max(int(dictionary_rows), 1),
+        1 if has_metadata else 0.5,
+    ]
+
+    fig = go.Figure(
+        go.Sankey(
+            arrangement="snap",
+            node=dict(
+                pad=18,
+                thickness=18,
+                line=dict(color="#CBD5E1", width=0.8),
+                label=labels,
+                color=[
+                    "#DBEAFE",
+                    "#E0F2FE",
+                    "#DCFCE7",
+                    "#FEF3C7",
+                    "#FFEDD5",
+                    "#FEE2E2",
+                    "#EDE9FE",
+                    "#F1F5F9",
+                    "#DBEAFE",
+                ],
+            ),
+            link=dict(source=sources, target=targets, value=values, color="rgba(37, 99, 235, 0.18)"),
+        )
+    )
+    fig.update_layout(title="Cleaning-to-dashboard data flow")
+    return _base_layout(fig, height=430)
+
+
+def review_readiness_funnel(df: pd.DataFrame) -> go.Figure:
+    """Show how many rows remain after key readiness checks."""
+
+    total = len(df)
+    water_ready = int(df["water_use_l"].notna().sum()) if "water_use_l" in df.columns else 0
+    analysis_ready = int(df["analysis_ready_water_use_flag"].sum()) if "analysis_ready_water_use_flag" in df.columns else 0
+    no_warning = int((~df["sanity_warning_flag"]).sum()) if "sanity_warning_flag" in df.columns else total
+    no_review = int((~df["needs_review"]).sum()) if "needs_review" in df.columns else no_warning
+
+    fig = go.Figure(
+        go.Funnel(
+            y=[
+                "Rows in current scope",
+                "Water quantity present",
+                "Analysis-ready water rows",
+                "No warning flag",
+                "No human-review flag",
+            ],
+            x=[total, water_ready, analysis_ready, no_warning, no_review],
+            marker={"color": ["#2563EB", "#0EA5E9", "#059669", "#D97706", "#64748B"]},
+        )
+    )
+    fig.update_layout(title="Data readiness funnel")
+    return _base_layout(fig, height=390)
+
+
+def score_radar_chart(scorecard: pd.DataFrame) -> go.Figure:
+    """Compare system score dimensions as a radar chart."""
+
+    dimensions = [
+        "efficiency_score",
+        "stability_score",
+        "risk_score",
+        "workload_score",
+        "confidence_score",
+    ]
+    labels = ["Efficiency", "Stability", "Risk", "Workload", "Confidence"]
+    fig = go.Figure()
+    for _, row in scorecard.iterrows():
+        values = [
+            float(row[column]) if column in row and pd.notna(row[column]) else 0.0
+            for column in dimensions
+        ]
+        fig.add_trace(
+            go.Scatterpolar(
+                r=values + [values[0]],
+                theta=labels + [labels[0]],
+                fill="toself",
+                name=str(row["system"]),
+            )
+        )
+    fig.update_layout(
+        title="System score profile radar",
+        polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
+    )
+    return _base_layout(fig, height=440)
+
+
+def system_score_heatmap(scorecard: pd.DataFrame) -> go.Figure:
+    """Render score dimensions as a compact heatmap."""
+
+    matrix = scorecard.set_index("system")[
+        [
+            "efficiency_score",
+            "stability_score",
+            "risk_score",
+            "workload_score",
+            "confidence_score",
+        ]
+    ].rename(
+        columns={
+            "efficiency_score": "Efficiency",
+            "stability_score": "Stability",
+            "risk_score": "Risk",
+            "workload_score": "Workload",
+            "confidence_score": "Confidence",
+        }
+    )
+    fig = px.imshow(
+        matrix,
+        aspect="auto",
+        color_continuous_scale="Blues",
+        text_auto=".0f",
+        zmin=0,
+        zmax=100,
+    )
+    fig.update_layout(title="System score heatmap", xaxis_title="", yaxis_title="")
+    fig.update_coloraxes(colorbar_title="Score")
+    return _base_layout(fig, height=380)
+
+
+def feature_availability_heatmap(df: pd.DataFrame) -> go.Figure:
+    """Show availability of important fields by system."""
+
+    features = {
+        "Water use": "water_use_l",
+        "Return water": "return_now_l",
+        "Water in return": "water_in_return_l",
+        "Duration": "water_addition_duration_min",
+        "pH-down": "ph_down_effective_ml",
+        "Plant count": "plant_count",
+        "Plant name": "plant_name_known_flag",
+        "Growth stage": "growth_stage_known_flag",
+        "Leak status": "leak_reported_flag",
+    }
+    rows: list[dict[str, float | str]] = []
+    for system, group in df.groupby("system"):
+        row: dict[str, float | str] = {"system": system}
+        for label, column in features.items():
+            if column not in group.columns:
+                row[label] = np.nan
+            elif group[column].dtype == bool:
+                row[label] = float(group[column].mean())
+            else:
+                row[label] = float(group[column].notna().mean())
+        rows.append(row)
+
+    matrix = pd.DataFrame(rows).set_index("system")
+    fig = px.imshow(
+        matrix,
+        aspect="auto",
+        color_continuous_scale=[[0, "#FEE2E2"], [0.5, "#FEF3C7"], [1, "#DCFCE7"]],
+        text_auto=".0%",
+        zmin=0,
+        zmax=1,
+    )
+    fig.update_layout(title="Feature availability by system", xaxis_title="", yaxis_title="")
+    fig.update_coloraxes(colorbar_tickformat=".0%", colorbar_title="Available")
+    return _base_layout(fig, height=420)
+
+
+def risk_treemap(problem_counts: pd.DataFrame) -> go.Figure:
+    """Show issue composition by system and category."""
+
+    fig = px.treemap(
+        problem_counts,
+        path=["system", "problem_category"],
+        values="count",
+        color="count",
+        color_continuous_scale="OrRd",
+    )
+    fig.update_layout(title="Operational issue composition")
+    return _base_layout(fig, height=430)
+
+
+def crop_sunburst_chart(crop_counts: pd.DataFrame) -> go.Figure:
+    """Show crop hierarchy by system."""
+
+    fig = px.sunburst(
+        crop_counts,
+        path=["system", "crop_type"],
+        values="count",
+        color="system",
+        color_discrete_map=SYSTEM_COLORS,
+    )
+    fig.update_layout(title="Crop hierarchy by system")
+    return _base_layout(fig, height=430)
+
+
+def weekday_density_heatmap(df: pd.DataFrame, value_column: str = "dataset_row_id") -> go.Figure:
+    """Show observation density by weekday and system."""
+
+    density = (
+        df.groupby(["system", "weekday_name"], as_index=False)
+        .agg(rows=(value_column, "count"))
+        .sort_values(["system", "weekday_name"])
+    )
+    density["weekday_name"] = pd.Categorical(
+        density["weekday_name"], categories=WEEKDAY_ORDER, ordered=True
+    )
+    return heatmap_chart(
+        density,
+        x="weekday_name",
+        y="system",
+        z="rows",
+        title="Observation density by weekday",
+        color_scale="Blues",
+        text_auto=".0f",
+    )

@@ -4,12 +4,18 @@ from __future__ import annotations
 
 import streamlit as st
 
-from utils.charts import risk_confidence_scatter, score_bar_chart
+from utils.charts import (
+    risk_confidence_scatter,
+    score_bar_chart,
+    score_radar_chart,
+    system_score_heatmap,
+)
 from utils.metrics import build_trust_matrix, compute_system_summary, format_num, format_pct
 from utils.scoring import build_system_scorecard
 from utils.ui import (
     build_page_context,
     render_badge,
+    render_chart_conclusion,
     render_comparability_note,
     render_hero,
     render_metric_card,
@@ -178,11 +184,33 @@ with viz_left:
     fig1 = score_bar_chart(scorecard)
     fig1.update_layout(title="Multi-Dimensional System Performance Comparison")
     st.plotly_chart(fig1, use_container_width=True)
+    render_chart_conclusion(
+        "The main comparison dimensions for each system on a common 0-100 score scale.",
+        "No single bar should decide the winner; the most defensible choice depends on whether efficiency, stability, risk, or confidence matters most.",
+    )
 
 with viz_right:
     fig2 = risk_confidence_scatter(scorecard)
     fig2.update_layout(title="Risk vs Confidence: Reliability-Aware System Evaluation")
     st.plotly_chart(fig2, use_container_width=True)
+    render_chart_conclusion(
+        "Operational risk plotted against evidence confidence, with observation volume shown by marker size.",
+        "High-risk systems with moderate or strong confidence are priority review targets because the evidence is strong enough to act on.",
+    )
+
+profile_left, profile_right = st.columns(2, gap="large")
+with profile_left:
+    st.plotly_chart(score_radar_chart(scorecard), use_container_width=True)
+    render_chart_conclusion(
+        "Each system's shape across efficiency, stability, risk, workload, and confidence.",
+        "The radar view makes trade-offs visible: a system can be efficient but still carry workload or risk pressure.",
+    )
+with profile_right:
+    st.plotly_chart(system_score_heatmap(scorecard), use_container_width=True)
+    render_chart_conclusion(
+        "A dense score matrix for quickly scanning high and low dimensions by system.",
+        "The heatmap is useful for presentation because it turns the scorecard into an immediate strengths-and-risks map.",
+    )
     
 st.markdown("### Can we trust this?")
 st.dataframe(trust_matrix, use_container_width=True, hide_index=True)
