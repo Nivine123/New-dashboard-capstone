@@ -14,7 +14,13 @@ from utils.charts import (
     stacked_quality_chart,
 )
 from utils.metrics import compute_daily_metrics, compute_quality_summary, compute_system_summary, format_num, format_pct
-from utils.ui import build_page_context, render_comparability_note, render_hero, render_metric_card
+from utils.ui import (
+    build_page_context,
+    render_chart_conclusion,
+    render_comparability_note,
+    render_hero,
+    render_metric_card,
+)
 
 context = build_page_context("Water & Resource Analytics")
 df = context["df"]
@@ -84,6 +90,10 @@ with trend_left:
         ),
         use_container_width=True,
     )
+    render_chart_conclusion(
+        "Daily water-use totals by greenhouse system.",
+        "The chart reveals demand spikes and operating phases, but aggregate or estimated rows should be checked before treating spikes as physical events.",
+    )
 with trend_right:
     st.plotly_chart(
         line_trend_chart(
@@ -95,6 +105,10 @@ with trend_right:
             rolling=True,
         ),
         use_container_width=True,
+    )
+    render_chart_conclusion(
+        "A 7-day rolling water-use average by system.",
+        "The rolling view smooths day-level noise and makes sustained shifts easier to separate from isolated records.",
     )
 
 dist_left, dist_right = st.columns(2, gap="large")
@@ -108,6 +122,10 @@ with dist_left:
         ),
         use_container_width=True,
     )
+    render_chart_conclusion(
+        "The spread of analysis-ready water-use observations for each system.",
+        "Wide boxes or many outliers point to variable operations, data issues, or genuine high-demand periods worth investigating.",
+    )
 with dist_right:
     st.plotly_chart(
         histogram_chart(
@@ -118,6 +136,10 @@ with dist_right:
             bins=24,
         ),
         use_container_width=True,
+    )
+    render_chart_conclusion(
+        "The frequency distribution of water-use values by system.",
+        "Overlapping distributions suggest similar observed ranges; separated distributions suggest different operating scales or measurement bases.",
     )
 
 st.markdown("### Return-water and addition patterns")
@@ -142,6 +164,10 @@ return_fig = px.bar(
 )
 return_fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(255,255,255,0.88)")
 st.plotly_chart(return_fig, use_container_width=True)
+render_chart_conclusion(
+    "Average return-water levels and median water-addition duration by system.",
+    "Return-water and duration patterns indicate how much operational effort and flow balance differ across systems.",
+)
 
 resource_left, resource_right = st.columns(2, gap="large")
 with resource_left:
@@ -154,6 +180,10 @@ with resource_left:
         ),
         use_container_width=True,
     )
+    render_chart_conclusion(
+        "Daily nutrient addition quantities by system.",
+        "Concentrated nutrient periods can explain cost, workload, and efficiency differences when quantity tracking is complete.",
+    )
 with resource_right:
     st.plotly_chart(
         resource_activity_chart(
@@ -164,6 +194,10 @@ with resource_right:
         ),
         use_container_width=True,
     )
+    render_chart_conclusion(
+        "Daily pH-down activity by system.",
+        "Frequent or high pH-down additions point to chemistry-management burden rather than water use alone.",
+    )
 
 st.markdown("### Measured vs estimated / aggregate context")
 st.markdown(
@@ -173,6 +207,10 @@ st.markdown(
 st.plotly_chart(
     stacked_quality_chart(quality["status_by_system"]),
     use_container_width=True,
+)
+render_chart_conclusion(
+    "Data-quality composition for rows used in this resource view.",
+    "Water conclusions are strongest when usable rows dominate and review, estimated, or aggregate rows are limited.",
 )
 
 with st.expander("Method note for this page", expanded=False):

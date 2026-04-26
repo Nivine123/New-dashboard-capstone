@@ -30,24 +30,24 @@ def inject_theme() -> None:
         <style>
             :root {
                 color-scheme: light;
-                --bg: #f3f6f4;
-                --bg-soft: #eef3f0;
+                --bg: #F8FAFC;
+                --bg-soft: #F8FAFC;
                 --surface: rgba(255, 255, 255, 0.94);
                 --surface-strong: #ffffff;
-                --surface-muted: #f7faf8;
-                --stroke: #d9e2db;
-                --stroke-strong: #cfd9d1;
-                --text: #18324a;
-                --muted: #5a7181;
-                --accent: #2c7a70;
-                --accent-soft: #e6f2ee;
-                --warning: #c38b19;
-                --warning-soft: #fbf2da;
-                --risk: #b6523e;
-                --risk-soft: #f9e7e2;
-                --shadow-lg: 0 18px 36px rgba(18, 44, 67, 0.08);
-                --shadow-md: 0 10px 24px rgba(18, 44, 67, 0.06);
-                --shadow-sm: 0 4px 14px rgba(18, 44, 67, 0.05);
+                --surface-muted: #F8FAFC;
+                --stroke: #E2E8F0;
+                --stroke-strong: #CBD5E1;
+                --text: #0F172A;
+                --muted: #64748B;
+                --accent: #2563EB;
+                --accent-soft: #DBEAFE;
+                --warning: #D97706;
+                --warning-soft: #FEF3C7;
+                --risk: #DC2626;
+                --risk-soft: #FEE2E2;
+                --shadow-lg: 0 18px 36px rgba(15, 23, 42, 0.08);
+                --shadow-md: 0 10px 24px rgba(15, 23, 42, 0.06);
+                --shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.05);
             }
             html, body, [data-testid="stAppViewContainer"] {
                 background: var(--bg-soft);
@@ -55,9 +55,7 @@ def inject_theme() -> None:
                 font-family: "Aptos", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
             }
             .stApp {
-                background:
-                    radial-gradient(circle at top right, rgba(44, 122, 112, 0.08), transparent 26%),
-                    linear-gradient(180deg, #f8faf8 0%, var(--bg-soft) 100%);
+                background: linear-gradient(180deg, #FFFFFF 0%, var(--bg-soft) 100%);
                 color: var(--text);
             }
             .block-container {
@@ -68,16 +66,15 @@ def inject_theme() -> None:
                 max-width: 1500px;
             }
             [data-testid="stHeader"] {
-                background: rgba(248, 250, 248, 0.82);
-                border-bottom: 1px solid rgba(217, 226, 219, 0.7);
+                background: rgba(248, 250, 252, 0.9);
+                border-bottom: 1px solid rgba(226, 232, 240, 0.9);
                 backdrop-filter: blur(12px);
             }
             [data-testid="stToolbar"] {
                 color: var(--text);
             }
             [data-testid="stSidebar"] {
-                background:
-                    linear-gradient(180deg, rgba(248, 251, 249, 0.98), rgba(242, 247, 244, 0.98));
+                background: #FFFFFF;
                 border-right: 1px solid var(--stroke);
             }
             [data-testid="stSidebarNav"] {
@@ -91,7 +88,7 @@ def inject_theme() -> None:
                 margin-bottom: 0.18rem;
             }
             [data-testid="stSidebarNav"] a:hover {
-                background: rgba(44, 122, 112, 0.08);
+                background: rgba(37, 99, 235, 0.08);
             }
             [data-baseweb="select"] > div,
             [data-baseweb="input"] > div,
@@ -110,12 +107,12 @@ def inject_theme() -> None:
             [data-baseweb="select"] > div:hover,
             [data-baseweb="input"] > div:hover,
             [data-baseweb="textarea"] > div:hover {
-                border-color: #bdd0c5;
+                border-color: #BFDBFE;
             }
             [data-baseweb="tag"] {
                 background: var(--accent-soft) !important;
                 border-radius: 999px !important;
-                border: 1px solid #c7ded6 !important;
+                border: 1px solid #BFDBFE !important;
                 color: var(--accent) !important;
             }
             [data-baseweb="tag"] span {
@@ -181,24 +178,14 @@ def inject_theme() -> None:
                 line-height: 1.55;
             }
             .hero-card {
-                background:
-                    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 249, 246, 0.96));
+                background: #FFFFFF;
                 border: 1px solid var(--stroke);
-                border-radius: 26px;
+                border-radius: 16px;
                 padding: 1.55rem 1.7rem 1.45rem;
                 box-shadow: var(--shadow-lg);
                 margin-bottom: 1.1rem;
                 position: relative;
                 overflow: hidden;
-            }
-            .hero-card::after {
-                content: "";
-                position: absolute;
-                inset: auto -40px -52px auto;
-                width: 220px;
-                height: 220px;
-                border-radius: 50%;
-                background: radial-gradient(circle, rgba(44, 122, 112, 0.12) 0%, rgba(44, 122, 112, 0) 68%);
             }
             .hero-eyebrow {
                 color: var(--accent);
@@ -228,7 +215,7 @@ def inject_theme() -> None:
             .metric-card {
                 background: var(--surface);
                 border: 1px solid var(--stroke);
-                border-radius: 20px;
+                border-radius: 12px;
                 padding: 1rem 1rem 0.95rem;
                 box-shadow: var(--shadow-sm);
                 min-height: 126px;
@@ -262,7 +249,7 @@ def inject_theme() -> None:
                 background: var(--surface);
                 border: 1px solid var(--stroke);
                 border-left: 5px solid var(--accent);
-                border-radius: 18px;
+                border-radius: 12px;
                 padding: 0.95rem 1rem 0.92rem;
                 box-shadow: var(--shadow-sm);
                 min-height: 140px;
@@ -303,10 +290,25 @@ def inject_theme() -> None:
                 font-size: 0.85rem;
                 line-height: 1.45;
             }
+            .chart-conclusion {
+                background: #FFFFFF;
+                border: 1px solid var(--stroke);
+                border-left: 4px solid var(--accent);
+                border-radius: 10px;
+                color: var(--muted);
+                font-size: 0.9rem;
+                line-height: 1.45;
+                margin: -0.15rem 0 1rem 0;
+                padding: 0.72rem 0.82rem;
+                box-shadow: var(--shadow-sm);
+            }
+            .chart-conclusion strong {
+                color: var(--text);
+            }
             .sidebar-card {
                 background: rgba(255, 255, 255, 0.88);
                 border: 1px solid var(--stroke);
-                border-radius: 18px;
+                border-radius: 12px;
                 padding: 0.9rem 0.95rem;
                 box-shadow: var(--shadow-sm);
                 margin-bottom: 0.85rem;
@@ -323,10 +325,10 @@ def inject_theme() -> None:
                 line-height: 1.4;
             }
             .comparability-card {
-                background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(251, 246, 232, 0.98));
-                border: 1px solid #ead8a8;
+                background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255, 251, 235, 0.98));
+                border: 1px solid #FDE68A;
                 border-left: 5px solid var(--warning);
-                border-radius: 18px;
+                border-radius: 12px;
                 padding: 0.95rem 1rem 0.92rem;
                 box-shadow: var(--shadow-sm);
                 margin: 0.2rem 0 1rem 0;
@@ -357,8 +359,8 @@ def inject_theme() -> None:
             }
             .status-badge.good {
                 background: var(--accent-soft);
-                color: #225e57;
-                border-color: #c4ddd5;
+                color: #1D4ED8;
+                border-color: #BFDBFE;
             }
             .status-badge.warn {
                 background: var(--warning-soft);
@@ -422,6 +424,20 @@ def render_badge(label: str, tone: str = "good") -> None:
     )
 
 
+def render_chart_conclusion(what: str, conclusion: str) -> None:
+    """Add a short, consistent explanation under a chart."""
+
+    st.markdown(
+        f"""
+        <div class="chart-conclusion">
+            <strong>What it shows:</strong> {what}<br>
+            <strong>Conclusion:</strong> {conclusion}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_sidebar(df, dataset_path) -> dict[str, Any]:
     options = available_filter_options(df)
     defaults = default_filters(df)
@@ -431,7 +447,7 @@ def render_sidebar(df, dataset_path) -> dict[str, Any]:
             f"""
             <div class="sidebar-card">
                 <div class="sidebar-title">Analysis Controls</div>
-                <div class="sidebar-subtitle">Dataset: <strong>{dataset_path.name}</strong><br>Refine scope, crop context, and evidence quality before interpreting system differences.</div>
+                <div class="sidebar-subtitle">Refine scope, crop context, and evidence quality before interpreting system differences.</div>
             </div>
             """,
             unsafe_allow_html=True,

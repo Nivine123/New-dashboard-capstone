@@ -5,9 +5,14 @@ from __future__ import annotations
 import plotly.express as px
 import streamlit as st
 
-from utils.charts import line_trend_chart, weekly_multi_metric_chart
+from utils.charts import line_trend_chart, weekday_density_heatmap, weekly_multi_metric_chart
 from utils.metrics import compute_daily_metrics, compute_weekly_metrics
-from utils.ui import build_page_context, render_comparability_note, render_hero
+from utils.ui import (
+    build_page_context,
+    render_chart_conclusion,
+    render_comparability_note,
+    render_hero,
+)
 
 context = build_page_context("Trends Over Time")
 df = context["df"]
@@ -51,6 +56,10 @@ with top_left:
         plot_bgcolor="rgba(255,255,255,0.88)",
     )
     st.plotly_chart(activity_fig, use_container_width=True)
+    render_chart_conclusion(
+        "Observation counts through time by system.",
+        "Uneven logging intensity can shape apparent trends, so activity volume should be checked before reading performance movement.",
+    )
 with top_right:
     st.plotly_chart(
         weekly_multi_metric_chart(
@@ -60,6 +69,10 @@ with top_right:
             y_title="Liters per week",
         ),
         use_container_width=True,
+    )
+    render_chart_conclusion(
+        "Weekly water-use totals by system.",
+        "Weekly aggregation reduces noise and makes broader operating phases easier to see.",
     )
 
 mid_left, mid_right = st.columns(2, gap="large")
@@ -72,6 +85,10 @@ with mid_left:
             y_title="mL per week",
         ),
         use_container_width=True,
+    )
+    render_chart_conclusion(
+        "Weekly nutrient addition totals by system.",
+        "Nutrient spikes can indicate operational interventions, dosing changes, or incomplete logging depending on data quality.",
     )
 with mid_right:
     incident_long = weekly.melt(
@@ -97,6 +114,10 @@ with mid_right:
         xaxis_title="",
     )
     st.plotly_chart(issue_weekly_fig, use_container_width=True)
+    render_chart_conclusion(
+        "Weekly issue and leak event trends.",
+        "Clusters identify periods for root-cause review and help connect operational events to water or workload patterns.",
+    )
 
 st.markdown("### Rolling stability signals")
 st.markdown(
@@ -117,6 +138,10 @@ with roll_left:
         ),
         use_container_width=True,
     )
+    render_chart_conclusion(
+        "A rolling 7-day water-use average.",
+        "Sustained shifts are more decision-relevant than one-day spikes, especially when aggregate rows are present.",
+    )
 with roll_right:
     st.plotly_chart(
         line_trend_chart(
@@ -128,6 +153,10 @@ with roll_right:
             rolling=True,
         ),
         use_container_width=True,
+    )
+    render_chart_conclusion(
+        "A rolling 14-day issue intensity signal.",
+        "An upward rolling line suggests recurring operating pressure rather than isolated incidents.",
     )
 
 bottom_left, bottom_right = st.columns(2, gap="large")
@@ -141,6 +170,10 @@ with bottom_left:
         ),
         use_container_width=True,
     )
+    render_chart_conclusion(
+        "Manual intervention events summarized weekly.",
+        "Workload trends show whether a system is becoming easier or harder to operate over time.",
+    )
 with bottom_right:
     st.plotly_chart(
         weekly_multi_metric_chart(
@@ -151,6 +184,17 @@ with bottom_right:
         ),
         use_container_width=True,
     )
+    render_chart_conclusion(
+        "A 4-week smoothed water-use view.",
+        "This is the cleanest chart for thesis storytelling because it emphasizes broader directional movement.",
+    )
+
+st.markdown("### Observation rhythm")
+st.plotly_chart(weekday_density_heatmap(df), use_container_width=True)
+render_chart_conclusion(
+    "Observation density by weekday and system.",
+    "Strong weekday concentration can reflect measurement routine rather than system behavior, so it should temper temporal conclusions.",
+)
 
 with st.expander("Temporal analysis note", expanded=False):
     st.markdown(

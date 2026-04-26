@@ -8,6 +8,10 @@ A multi-page Streamlit application for a Masters in Data Analytics thesis focuse
 - `streamlit_app.py`: deployment-friendly entrypoint for Streamlit Community Cloud
 - `pages/`: dedicated thesis pages for comparison, resources, risk, crops, confidence, trends, recommendations, and methodology
 - `utils/`: reusable logic for loading, preprocessing, metrics, scoring, charts, recommendations, and shared UI
+- `outputs/cleaned_data.csv`: primary cleaned dataset used by the app
+- `outputs/`: optional validation, quality, review-queue, data-dictionary, and metadata reports
+- `.streamlit/config.toml`: deployment theme and Streamlit runtime settings
+- `deploy_check.py`: local readiness check for syntax, required files, and data availability
 - `requirements.txt`: Python dependencies
 - `runtime.txt`: pinned Python runtime for cloud deployment
 
@@ -23,7 +27,7 @@ pip install -r requirements.txt
 3. Start the app:
 
 ```bash
-streamlit run app.py
+streamlit run streamlit_app.py
 ```
 
 4. Open the local Streamlit URL shown in the terminal.
@@ -45,7 +49,8 @@ This project is prepared for Streamlit Community Cloud.
    - `app.py`
    - `pages/`
    - `utils/`
-   - `greenhouse_systems_cleaned.csv`
+   - `outputs/cleaned_data.csv`
+   - optional `outputs/` report files
    - `.streamlit/config.toml`
    - `requirements.txt`
    - `runtime.txt`
@@ -55,14 +60,14 @@ This project is prepared for Streamlit Community Cloud.
 
 ### Notes for cloud deployment
 
-- The app loads `greenhouse_systems_cleaned(8).csv` first and falls back to `greenhouse_systems_cleaned.csv`. At least one of those files must be committed to the repo.
+- The app loads `outputs/cleaned_data.csv` first and falls back to older greenhouse cleaned CSV filenames only for local compatibility.
 - No local secrets are required for deployment.
 - The app uses only file-based local data, so there is no database or API setup step.
 - The dashboard is multi-page and Streamlit will automatically detect the `pages/` directory in deployment.
 
 ## Analytical logic used
 
-- The app loads the greenhouse CSV from the workspace, prioritizing `greenhouse_systems_cleaned(8).csv` and falling back to `greenhouse_systems_cleaned.csv` if needed.
+- The app loads the cleaned CSV from `outputs/cleaned_data.csv` and integrates optional cleaning reports when present.
 - Dates, timestamps, numeric measures, and boolean flags are standardized during preprocessing.
 - Nutrient and pH quantities are unified into derived fields so the app can use generic and system-specific measurement columns without double counting.
 - The app creates row-level evidence bands:
@@ -78,6 +83,8 @@ This project is prepared for Streamlit Community Cloud.
   - `Confidence`: analysis-ready coverage, estimated values, missing core measures, warning flags, and imputed values
 - System burden metrics are normalized by active days, with observation-normalized context shown where useful.
 - Recommendations are generated from those metrics and always framed with confidence-aware language.
+- The dashboard includes pipeline Sankey diagrams, readiness funnels, score radar charts, score heatmaps, availability heatmaps, issue treemaps, crop sunbursts, weekday density heatmaps, recommendation confidence charts, and cost waterfall/treemap views.
+- Every major chart includes a short conclusion underneath so the visual can be interpreted in a capstone or executive-review setting.
 
 ## Assumptions and limitations
 

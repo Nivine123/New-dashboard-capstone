@@ -10,9 +10,19 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from utils.charts import (
+    feature_availability_heatmap,
+    pipeline_flow_chart,
+    review_readiness_funnel,
+)
 from utils.data_loader import load_cleaning_outputs
 from utils.metrics import format_pct
-from utils.ui import build_page_context, render_hero, render_metric_card
+from utils.ui import (
+    build_page_context,
+    render_chart_conclusion,
+    render_hero,
+    render_metric_card,
+)
 
 
 KEY_REVIEW_COLUMNS = [
@@ -214,6 +224,37 @@ for start in range(0, len(cards), 3):
         with column:
             render_metric_card(*card)
 
+st.markdown("### Pipeline and readiness diagrams")
+diagram_left, diagram_right = st.columns(2, gap="large")
+with diagram_left:
+    st.plotly_chart(
+        pipeline_flow_chart(
+            cleaned_rows=len(cleaned_raw),
+            validation_rows=len(validation),
+            quality_rows=len(quality),
+            review_rows=len(review_queue),
+            dictionary_rows=len(dictionary),
+            has_metadata=bool(metadata),
+        ),
+        use_container_width=True,
+    )
+    render_chart_conclusion(
+        "How the cleaning notebook outputs feed the deployed Streamlit app.",
+        "The dashboard is deployment-ready because the primary cleaned data and optional report artifacts are available inside the project.",
+    )
+with diagram_right:
+    st.plotly_chart(review_readiness_funnel(prepared_df), use_container_width=True)
+    render_chart_conclusion(
+        "How many rows remain after water-readiness, warning, and review checks.",
+        "Rows needing review are not discarded; they are surfaced so decisions can distinguish usable evidence from records requiring human confirmation.",
+    )
+
+st.plotly_chart(feature_availability_heatmap(prepared_df), use_container_width=True)
+render_chart_conclusion(
+    "The share of rows with key analytical fields populated for each system.",
+    "Field coverage explains why some comparisons are strong while others must stay directional.",
+)
+
 
 st.markdown("### Validation and data quality")
 validation_left, validation_right = st.columns(2, gap="large")
@@ -239,6 +280,10 @@ with validation_left:
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig, use_container_width=True)
+        render_chart_conclusion(
+            "Validation checks grouped by severity and pass/fail status.",
+            "The app can separate checks that passed from warnings or failures before promoting any analytical conclusion.",
+        )
         st.dataframe(validation, use_container_width=True, hide_index=True)
     else:
         st.warning("Validation report is present but does not have the expected columns.")
@@ -267,6 +312,10 @@ with validation_right:
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)", showlegend=False)
         st.plotly_chart(fig, use_container_width=True)
+        render_chart_conclusion(
+            "Quality findings grouped by severity.",
+            "Warning-heavy areas should guide review priorities, while info-level findings provide context without blocking analysis.",
+        )
 
         warning_rows = quality_view[quality_view["severity"].astype(str).str.lower().eq("warning")]
         warning_rows = warning_rows.sort_values("count_numeric", ascending=False, na_position="last")
@@ -402,6 +451,10 @@ with domain_left:
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig, use_container_width=True)
+        render_chart_conclusion(
+            "Water-use movement over time by system and water-use basis.",
+            "Spikes and drops should be interpreted together with the quality and review flags because some rows represent estimates or aggregate periods.",
+        )
 
 with domain_right:
     if ph_chart.empty:
@@ -420,6 +473,10 @@ with domain_right:
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig, use_container_width=True)
+        render_chart_conclusion(
+            "Daily pH-down additions by system.",
+            "pH activity highlights intervention intensity and helps identify periods where chemistry adjustments were concentrated.",
+        )
 
 domain_bottom_left, domain_bottom_right = st.columns(2, gap="large")
 with domain_bottom_left:
@@ -441,6 +498,10 @@ with domain_bottom_left:
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig, use_container_width=True)
+        render_chart_conclusion(
+            "Leak-status reporting counts across systems.",
+            "A system with fewer reported leaks is only reassuring when leak-status coverage is also strong.",
+        )
 
 with domain_bottom_right:
     if duration_chart.empty:
@@ -456,6 +517,10 @@ with domain_bottom_right:
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)", showlegend=False)
         st.plotly_chart(fig, use_container_width=True)
+        render_chart_conclusion(
+            "Distribution of recorded water-addition duration by system.",
+            "Wide duration ranges point to variable operating workload or inconsistent recording that deserves follow-up.",
+        )
 
 
 st.markdown("### Data dictionary")

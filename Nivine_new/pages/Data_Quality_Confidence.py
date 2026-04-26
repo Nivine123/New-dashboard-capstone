@@ -22,6 +22,7 @@ from utils.ui import (
     build_page_context,
     render_badge,
     render_callout,
+    render_chart_conclusion,
     render_comparability_note,
     render_hero,
     render_metric_card,
@@ -81,17 +82,33 @@ with quality_left:
         stacked_quality_chart(quality["status_by_system"]),
         use_container_width=True,
     )
+    render_chart_conclusion(
+        "The composition of quality statuses by system.",
+        "A system with many review-required, estimated, or aggregate rows should be interpreted more cautiously than one dominated by usable rows.",
+    )
 with quality_right:
     st.plotly_chart(row_confidence_chart(df), use_container_width=True)
+    render_chart_conclusion(
+        "The share of rows in each evidence-strength band.",
+        "The selected slice supports stronger conclusions when strong evidence is the largest share.",
+    )
 
 st.markdown("### Missingness and completeness")
 st.plotly_chart(
     completeness_heatmap(quality["completeness"]),
     use_container_width=True,
 )
+render_chart_conclusion(
+    "Completeness of core analytical fields by system.",
+    "Sparse fields identify where the data collection process must improve before a claim becomes defensible.",
+)
 
 st.markdown("### System-level confidence scoring")
 st.plotly_chart(confidence_band_chart(scorecard), use_container_width=True)
+render_chart_conclusion(
+    "System-level confidence scores grouped by comparison strength.",
+    "Confidence is not the same as performance; it tells you how much trust to place in each system's metrics.",
+)
 
 flag_long = summary[
     [
@@ -125,6 +142,10 @@ flag_fig.update_layout(
     plot_bgcolor="rgba(255,255,255,0.88)",
 )
 st.plotly_chart(flag_fig, use_container_width=True)
+render_chart_conclusion(
+    "The quality-flag inputs behind the confidence framework.",
+    "The confidence score falls when estimated rows, warning flags, missing core measures, or imputation become material.",
+)
 
 st.markdown("### Can we trust this?")
 st.dataframe(trust_matrix, use_container_width=True, hide_index=True)

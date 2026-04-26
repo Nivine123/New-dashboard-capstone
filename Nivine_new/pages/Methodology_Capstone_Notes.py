@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import streamlit as st
 
+from utils.charts import pipeline_flow_chart
+from utils.data_loader import load_cleaning_outputs
 from utils.metrics import compute_system_summary
 from utils.scoring import build_system_scorecard
-from utils.ui import build_page_context, render_hero
+from utils.ui import build_page_context, render_chart_conclusion, render_hero
 
 context = build_page_context("Methodology / Thesis Notes")
 df = context["df"]
@@ -27,6 +29,9 @@ summary = compute_system_summary(df)
 scorecard, _ = build_system_scorecard(
     summary, mixed_types=df["system_type"].nunique() > 1
 )
+artifacts = load_cleaning_outputs()
+frames = artifacts["frames"]
+metadata = artifacts["metadata"]
 
 st.markdown("### Project objective")
 st.markdown(
@@ -51,6 +56,23 @@ st.markdown(
     - Observation window in scope: **{df['observation_date'].min():%Y-%m-%d} to {df['observation_date'].max():%Y-%m-%d}**
     - Source file used by the app: **{context['dataset_path'].name}**
     """
+)
+
+st.markdown("### Cleaning pipeline diagram")
+st.plotly_chart(
+    pipeline_flow_chart(
+        cleaned_rows=len(context["source_df"]),
+        validation_rows=len(frames.get("validation_report", [])),
+        quality_rows=len(frames.get("data_quality_summary", [])),
+        review_rows=len(frames.get("rows_needing_review", [])),
+        dictionary_rows=len(frames.get("data_dictionary", [])),
+        has_metadata=bool(metadata),
+    ),
+    use_container_width=True,
+)
+render_chart_conclusion(
+    "The cleaning workflow from raw workbook through notebook artifacts into the deployed dashboard.",
+    "The methodology is reproducible because the dashboard reads the notebook's cleaned outputs rather than changing the original raw file.",
 )
 
 with st.expander("Preprocessing assumptions", expanded=True):

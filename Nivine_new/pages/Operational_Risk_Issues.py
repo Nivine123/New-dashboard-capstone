@@ -10,6 +10,7 @@ from utils.charts import (
     horizontal_ranking_chart,
     issue_timeline_chart,
     leak_coverage_chart,
+    risk_treemap,
 )
 from utils.metrics import (
     compute_daily_metrics,
@@ -20,7 +21,13 @@ from utils.metrics import (
     format_pct,
 )
 from utils.scoring import build_system_scorecard
-from utils.ui import build_page_context, render_comparability_note, render_hero, render_metric_card
+from utils.ui import (
+    build_page_context,
+    render_chart_conclusion,
+    render_comparability_note,
+    render_hero,
+    render_metric_card,
+)
 
 context = build_page_context("Operational Risk & Issues")
 df = context["df"]
@@ -108,6 +115,10 @@ with risk_left:
         }
     )
     st.plotly_chart(leak_coverage_chart(leak_summary), use_container_width=True)
+    render_chart_conclusion(
+        "Observed leak rate compared with leak-reporting coverage by system.",
+        "Leak risk is only convincing when coverage is high; low coverage means the observed leak rate is a lower-bound estimate.",
+    )
 with risk_right:
     severity_df = (
         df.groupby(["system", "leak_severity"], as_index=False)
@@ -128,6 +139,10 @@ with risk_right:
         plot_bgcolor="rgba(255,255,255,0.88)",
     )
     st.plotly_chart(severity_fig, use_container_width=True)
+    render_chart_conclusion(
+        "Leak records split by severity class for each system.",
+        "Severity mix helps distinguish occasional minor events from systems with more serious water-loss risk.",
+    )
 
 rank_left, rank_right = st.columns(2, gap="large")
 with rank_left:
@@ -146,6 +161,10 @@ with rank_left:
         ),
         use_container_width=True,
     )
+    render_chart_conclusion(
+        "The most frequent operational issue categories across the current filter scope.",
+        "High-frequency categories should become the first checklist items for maintenance review.",
+    )
 with rank_right:
     overall_leak_rank = (
         leak_locations.groupby("leak_location", as_index=False)["count"]
@@ -162,10 +181,25 @@ with rank_right:
         ),
         use_container_width=True,
     )
+    render_chart_conclusion(
+        "The most common leak-location tokens among rows where leaks are reported.",
+        "Repeated locations suggest targeted inspection points rather than broad, unfocused troubleshooting.",
+    )
+
+if not problem_counts.empty:
+    st.plotly_chart(risk_treemap(problem_counts), use_container_width=True)
+    render_chart_conclusion(
+        "Operational issue composition nested by system and issue category.",
+        "The treemap shows which systems and issue families dominate the risk narrative in one view.",
+    )
 
 timeline_left, timeline_right = st.columns(2, gap="large")
 with timeline_left:
     st.plotly_chart(issue_timeline_chart(daily), use_container_width=True)
+    render_chart_conclusion(
+        "Issue and leak events through time by system.",
+        "Clusters in the timeline point to operating periods that deserve root-cause review.",
+    )
 with timeline_right:
     issue_heatmap_fig = heatmap_chart(
         issue_heatmap,
@@ -176,6 +210,10 @@ with timeline_right:
         color_scale="YlOrRd",
     )
     st.plotly_chart(issue_heatmap_fig, use_container_width=True)
+    render_chart_conclusion(
+        "Issue rates by weekday and system.",
+        "Weekday concentration may indicate routine-driven problems, staffing patterns, or repeated observation timing.",
+    )
 
 st.markdown("### Leak timing heatmap")
 st.plotly_chart(
@@ -188,6 +226,10 @@ st.plotly_chart(
         color_scale="YlOrBr",
     ),
     use_container_width=True,
+)
+render_chart_conclusion(
+    "Leak rates by weekday and system.",
+    "Persistent weekday patterns are useful for scheduling inspections, but missing leak reporting can weaken this signal.",
 )
 
 with st.expander("Risk interpretation note", expanded=False):
