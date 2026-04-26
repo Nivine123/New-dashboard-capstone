@@ -276,7 +276,7 @@ with validation_left:
             color="passed",
             text="checks",
             title="Validation checks by severity",
-            color_discrete_map={True: "#2A9D8F", False: "#E76F51", "True": "#2A9D8F", "False": "#E76F51"},
+            color_discrete_map={True: "#2563EB", False: "#DC2626", "True": "#2563EB", "False": "#DC2626"},
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)")
         st.plotly_chart(fig, width="stretch")
@@ -308,7 +308,7 @@ with validation_right:
             color="severity",
             text="findings",
             title="Quality findings by severity",
-            color_discrete_map={"info": "#2A9D8F", "warning": "#E9C46A", "fail": "#E76F51"},
+            color_discrete_map={"info": "#2563EB", "warning": "#D97706", "fail": "#DC2626"},
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)", showlegend=False)
         st.plotly_chart(fig, width="stretch")

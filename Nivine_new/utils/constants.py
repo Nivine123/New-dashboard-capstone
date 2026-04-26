@@ -5,14 +5,14 @@ from __future__ import annotations
 SYSTEM_ORDER = ["A-shape + Gutters", "Conventional", "Tower"]
 
 SYSTEM_COLORS = {
-    "A-shape + Gutters": "#2A9D8F",
-    "Conventional": "#264653",
-    "Tower": "#E9C46A",
+    "A-shape + Gutters": "#2563EB",
+    "Conventional": "#0F172A",
+    "Tower": "#F59E0B",
 }
 
 SYSTEM_TYPE_COLORS = {
-    "Hydroponic": "#2A9D8F",
-    "Soil": "#8D6E63",
+    "Hydroponic": "#2563EB",
+    "Soil": "#059669",
 }
 
 QUALITY_ORDER = ["Usable", "Aggregate", "Estimated", "Review Required", "Event Only"]
@@ -24,17 +24,17 @@ ROW_CONFIDENCE_ORDER = [
 ]
 
 ROW_CONFIDENCE_COLORS = {
-    "Strong evidence": "#2A9D8F",
-    "Directional evidence": "#E9C46A",
-    "Limited evidence": "#E76F51",
+    "Strong evidence": "#2563EB",
+    "Directional evidence": "#D97706",
+    "Limited evidence": "#DC2626",
 }
 
 ASSESSMENT_ORDER = ["Reliable", "Directional only", "Not reliable enough"]
 
 ASSESSMENT_COLORS = {
-    "Reliable": "#2A9D8F",
-    "Directional only": "#E9C46A",
-    "Not reliable enough": "#E76F51",
+    "Reliable": "#2563EB",
+    "Directional only": "#D97706",
+    "Not reliable enough": "#DC2626",
 }
 
 WEEKDAY_ORDER = [
