@@ -11,6 +11,7 @@ from utils.data_loader import (
     build_comparability_note,
     default_filters,
     filter_dataset,
+    load_cleaning_outputs,
     load_greenhouse_dataset,
 )
 
@@ -358,19 +359,160 @@ def inject_theme() -> None:
                 box-shadow: 0 2px 8px rgba(18, 44, 67, 0.04);
             }
             .status-badge.good {
-                background: var(--accent-soft);
-                color: #1D4ED8;
-                border-color: #BFDBFE;
+                background: #ECFDF5;
+                color: #047857;
+                border-color: #A7F3D0;
             }
             .status-badge.warn {
-                background: var(--warning-soft);
-                color: #886514;
-                border-color: #efd79a;
+                background: #FFFBEB;
+                color: #92400E;
+                border-color: #FDE68A;
             }
             .status-badge.risk {
-                background: var(--risk-soft);
-                color: #9b4535;
-                border-color: #efc0b5;
+                background: #FEF2F2;
+                color: #B91C1C;
+                border-color: #FECACA;
+            }
+            /* Nivo-style professional polish */
+            .block-container {
+                max-width: 1540px;
+                padding-top: 1.15rem;
+            }
+            [data-testid="stSidebar"] {
+                box-shadow: 8px 0 28px rgba(15, 23, 42, 0.04);
+            }
+            [data-testid="stSidebarNav"] a {
+                border: 1px solid transparent;
+                border-radius: 10px;
+                color: var(--text);
+                font-weight: 650;
+                padding-top: 0.52rem;
+                padding-bottom: 0.52rem;
+            }
+            [data-testid="stSidebarNav"] a[aria-current="page"],
+            [data-testid="stSidebarNav"] a:focus {
+                background: #EFF6FF;
+                border-color: #BFDBFE;
+                color: #1D4ED8;
+            }
+            h1, h2, h3 {
+                letter-spacing: 0;
+            }
+            h2 {
+                border-bottom: 1px solid var(--stroke);
+                padding-bottom: 0.28rem;
+            }
+            div[data-testid="stPlotlyChart"],
+            [data-testid="stDataFrame"],
+            [data-testid="stExpander"] {
+                border-radius: 12px;
+                border-color: var(--stroke);
+                box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+            }
+            div[data-testid="stAlert"] {
+                border-radius: 12px;
+                box-shadow: none;
+            }
+            .hero-card {
+                border-radius: 12px;
+                padding: 1.18rem 1.3rem;
+                margin-bottom: 1.05rem;
+                box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+            }
+            .hero-title {
+                font-size: 1.88rem;
+                letter-spacing: 0;
+            }
+            .hero-subtitle {
+                max-width: 1080px;
+            }
+            .hero-meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.45rem;
+                margin-top: 0.85rem;
+            }
+            .hero-pill {
+                background: #EFF6FF;
+                border: 1px solid #BFDBFE;
+                border-radius: 999px;
+                color: #1D4ED8;
+                font-size: 0.78rem;
+                font-weight: 700;
+                padding: 0.34rem 0.68rem;
+            }
+            .metric-card {
+                border-radius: 10px;
+                box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+                min-height: 118px;
+            }
+            .metric-label {
+                letter-spacing: 0.08em;
+            }
+            .metric-value {
+                font-size: 1.5rem;
+            }
+            .callout-card,
+            .comparability-card,
+            .chart-conclusion,
+            .sidebar-card {
+                border-radius: 10px;
+            }
+            .chart-conclusion {
+                background: #F8FAFC;
+                border-left-color: #2563EB;
+                box-shadow: none;
+            }
+            .freshness-card {
+                background: #F8FAFC;
+                border: 1px solid var(--stroke);
+                border-radius: 10px;
+                padding: 0.8rem 0.85rem;
+                margin-bottom: 0.9rem;
+            }
+            .freshness-title {
+                color: var(--text);
+                font-size: 0.88rem;
+                font-weight: 760;
+                margin-bottom: 0.45rem;
+            }
+            .freshness-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.45rem;
+            }
+            .freshness-item {
+                background: #FFFFFF;
+                border: 1px solid var(--stroke);
+                border-radius: 8px;
+                padding: 0.5rem 0.55rem;
+            }
+            .freshness-label {
+                color: var(--muted);
+                font-size: 0.67rem;
+                font-weight: 720;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+            }
+            .freshness-value {
+                color: var(--text);
+                font-size: 0.88rem;
+                font-weight: 760;
+                margin-top: 0.1rem;
+            }
+            [data-testid="stDownloadButton"] button,
+            [data-testid="stButton"] button {
+                border-radius: 10px;
+                border: 1px solid #BFDBFE;
+                background: #FFFFFF;
+                color: #1D4ED8;
+                font-weight: 700;
+            }
+            [data-testid="stDownloadButton"] button:hover,
+            [data-testid="stButton"] button:hover {
+                border-color: #2563EB;
+                background: #EFF6FF;
+                color: #1D4ED8;
             }
         </style>
         """,
@@ -385,6 +527,11 @@ def render_hero(title: str, subtitle: str, eyebrow: str = "Masters in Data Analy
             <div class="hero-eyebrow">{eyebrow}</div>
             <div class="hero-title">{title}</div>
             <div class="hero-subtitle">{subtitle}</div>
+            <div class="hero-meta">
+                <span class="hero-pill">Cleaned outputs bundled</span>
+                <span class="hero-pill">Confidence-aware analytics</span>
+                <span class="hero-pill">Deployment-ready</span>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -441,6 +588,15 @@ def render_chart_conclusion(what: str, conclusion: str) -> None:
 def render_sidebar(df, dataset_path) -> dict[str, Any]:
     options = available_filter_options(df)
     defaults = default_filters(df)
+    cleaning_outputs = load_cleaning_outputs()
+    metadata = cleaning_outputs["metadata"]
+    bundled_reports = 6 - len(cleaning_outputs["missing"])
+    try:
+        cleaned_rows = int(metadata.get("cleaned_rows", len(df)))
+    except (TypeError, ValueError):
+        cleaned_rows = len(df)
+    run_date = str(metadata.get("run_date") or metadata.get("generated_at_utc") or "Available")
+    run_date = run_date.split("T")[0] if "T" in run_date else run_date
 
     with st.sidebar:
         st.markdown(
@@ -452,64 +608,88 @@ def render_sidebar(df, dataset_path) -> dict[str, Any]:
             """,
             unsafe_allow_html=True,
         )
-
-        st.markdown("### Core scope")
-        systems = st.multiselect(
-            "System",
-            options=options["systems"],
-            default=defaults["systems"],
-            help="Select one or more greenhouse systems for the current analysis view.",
-        )
-        system_types = st.multiselect(
-            "System type",
-            options=options["system_types"],
-            default=defaults["system_types"],
-        )
-        date_range = st.slider(
-            "Observation date range",
-            min_value=defaults["date_range"][0],
-            max_value=defaults["date_range"][1],
-            value=defaults["date_range"],
-        )
-
-        st.markdown("### Crop context")
-        crop_types = st.multiselect(
-            "Crop types",
-            options=options["crops"],
-            default=[],
-            help="Optional crop filter. Leaving this empty keeps every crop in scope.",
-        )
-        plant_names = st.multiselect(
-            "Plant name",
-            options=options["plant_names"],
-            default=[],
+        st.markdown(
+            f"""
+            <div class="freshness-card">
+                <div class="freshness-title">Data Freshness</div>
+                <div class="freshness-grid">
+                    <div class="freshness-item">
+                        <div class="freshness-label">Clean run</div>
+                        <div class="freshness-value">{run_date}</div>
+                    </div>
+                    <div class="freshness-item">
+                        <div class="freshness-label">Rows</div>
+                        <div class="freshness-value">{cleaned_rows:,}</div>
+                    </div>
+                    <div class="freshness-item">
+                        <div class="freshness-label">Reports</div>
+                        <div class="freshness-value">{bundled_reports}/6</div>
+                    </div>
+                    <div class="freshness-item">
+                        <div class="freshness-label">Raw data</div>
+                        <div class="freshness-value">Untouched</div>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        st.markdown("### Evidence filters")
-        quality_status = st.multiselect(
-            "Data quality status",
-            options=options["quality_status"],
-            default=defaults["quality_status"],
-        )
-        row_confidence_bands = st.multiselect(
-            "Evidence strength",
-            options=options["row_confidence_bands"],
-            default=defaults["row_confidence_bands"],
-            help="Filter rows by the app's confidence-aware classification.",
-        )
+        with st.expander("Core Scope", expanded=True):
+            systems = st.multiselect(
+                "System",
+                options=options["systems"],
+                default=defaults["systems"],
+                help="Select one or more greenhouse systems for the current analysis view.",
+            )
+            system_types = st.multiselect(
+                "System type",
+                options=options["system_types"],
+                default=defaults["system_types"],
+            )
+            date_range = st.slider(
+                "Observation date range",
+                min_value=defaults["date_range"][0],
+                max_value=defaults["date_range"][1],
+                value=defaults["date_range"],
+            )
 
-        st.markdown("### Include / Exclude")
-        include_estimated = st.checkbox(
-            "Include estimated rows",
-            value=defaults["include_estimated"],
-        )
-        include_aggregate = st.checkbox(
-            "Include weekend / aggregate rows",
-            value=defaults["include_aggregate"],
-        )
+        with st.expander("Crop Context", expanded=False):
+            crop_types = st.multiselect(
+                "Crop types",
+                options=options["crops"],
+                default=[],
+                help="Optional crop filter. Leaving this empty keeps every crop in scope.",
+            )
+            plant_names = st.multiselect(
+                "Plant name",
+                options=options["plant_names"],
+                default=[],
+            )
+
+        with st.expander("Evidence Quality", expanded=True):
+            quality_status = st.multiselect(
+                "Data quality status",
+                options=options["quality_status"],
+                default=defaults["quality_status"],
+            )
+            row_confidence_bands = st.multiselect(
+                "Evidence strength",
+                options=options["row_confidence_bands"],
+                default=defaults["row_confidence_bands"],
+                help="Filter rows by the app's confidence-aware classification.",
+            )
+            include_estimated = st.checkbox(
+                "Include estimated rows",
+                value=defaults["include_estimated"],
+            )
+            include_aggregate = st.checkbox(
+                "Include weekend / aggregate rows",
+                value=defaults["include_aggregate"],
+            )
 
         st.markdown(
-            "<div class='small-note'>Use the controls above to tighten the evidence base before interpreting system differences.</div>",
+            "<div class='small-note'>Filters apply across every page and keep the dashboard's conclusions tied to the active evidence slice.</div>",
             unsafe_allow_html=True,
         )
 

@@ -8,6 +8,7 @@ This Streamlit app is ready for Streamlit Community Cloud from the project root.
 - Main file: `streamlit_app.py`
 - Python runtime: `runtime.txt`
 - Theme: `.streamlit/config.toml`
+- Navigation: explicit grouped router in `streamlit_app.py`
 
 ## Required Data
 

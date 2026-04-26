@@ -4,7 +4,7 @@ A multi-page Streamlit application for a Masters in Data Analytics thesis focuse
 
 ## Project structure
 
-- `streamlit_app.py`: deployment-friendly entrypoint for Streamlit Community Cloud
+- `streamlit_app.py`: deployment-friendly router for Streamlit Community Cloud
 - `app.py`: Executive Overview page
 - `pages/`: dedicated thesis pages for comparison, resources, risk, crops, confidence, trends, recommendations, methodology, and cost optimization
 - `utils/`: reusable logic for loading, preprocessing, metrics, scoring, charts, recommendations, and shared UI
@@ -83,7 +83,7 @@ This project is prepared for Streamlit Community Cloud.
 - The app loads `outputs/cleaned_data.csv` first and falls back to older greenhouse cleaned CSV filenames only for local compatibility.
 - No local secrets are required for deployment.
 - The app uses only file-based local data, so there is no database or API setup step.
-- The dashboard is multi-page and Streamlit will automatically detect the `pages/` directory in deployment.
+- The dashboard uses an explicit Streamlit router in `streamlit_app.py`, so the sidebar shows only the intended dashboard pages and not a generic entrypoint page.
 - The deployment check verifies that the bundled cleaned outputs exist and that deploy-facing files do not contain machine-local absolute paths.
 
 ## Analytical logic used
@@ -106,6 +106,7 @@ This project is prepared for Streamlit Community Cloud.
 - Recommendations are generated from those metrics and always framed with confidence-aware language.
 - The dashboard includes pipeline Sankey diagrams, readiness funnels, score radar charts, score heatmaps, availability heatmaps, issue treemaps, crop sunbursts, weekday density heatmaps, recommendation confidence charts, and cost waterfall/treemap views.
 - Every major chart includes a short conclusion underneath so the visual can be interpreted in a capstone or executive-review setting.
+- The interface uses grouped sidebar navigation, a polished light blue/slate theme, compact metric cards, and a data-freshness panel that summarizes the bundled cleaned run without exposing machine-local paths.
 
 ## Assumptions and limitations
 

@@ -22,13 +22,13 @@ def _base_layout(fig: go.Figure, height: int = 380) -> go.Figure:
         height=height,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="#ffffff",
-        margin=dict(l=18, r=18, t=58, b=18),
-        font=dict(family="Aptos, Segoe UI, sans-serif", color="#17324d", size=13),
+        margin=dict(l=18, r=18, t=56, b=24),
+        font=dict(family="Inter, Aptos, Segoe UI, sans-serif", color="#0F172A", size=13),
         legend_title_text="",
         title=dict(
             x=0.01,
             xanchor="left",
-            font=dict(size=18, family="Aptos, Segoe UI, sans-serif", color="#17324d"),
+            font=dict(size=17, family="Inter, Aptos, Segoe UI, sans-serif", color="#0F172A"),
         ),
         legend=dict(
             orientation="h",
@@ -40,27 +40,27 @@ def _base_layout(fig: go.Figure, height: int = 380) -> go.Figure:
         ),
         hoverlabel=dict(
             bgcolor="#ffffff",
-            bordercolor="#d7e0d9",
-            font=dict(color="#17324d", size=12),
+            bordercolor="#CBD5E1",
+            font=dict(color="#0F172A", size=12),
         ),
     )
     fig.update_xaxes(
         showgrid=False,
         zeroline=False,
         showline=True,
-        linecolor="#d4ddd6",
-        tickcolor="#b9c7bc",
+        linecolor="#E2E8F0",
+        tickcolor="#CBD5E1",
         ticks="outside",
-        title_font=dict(size=12, color="#5c7081"),
+        title_font=dict(size=12, color="#64748B"),
     )
     fig.update_yaxes(
-        gridcolor="#e4ebe5",
+        gridcolor="#E2E8F0",
         zeroline=False,
         showline=True,
-        linecolor="#d4ddd6",
-        tickcolor="#b9c7bc",
+        linecolor="#E2E8F0",
+        tickcolor="#CBD5E1",
         ticks="outside",
-        title_font=dict(size=12, color="#5c7081"),
+        title_font=dict(size=12, color="#64748B"),
     )
     return fig
 
@@ -205,7 +205,7 @@ def leak_coverage_chart(summary: pd.DataFrame) -> go.Figure:
             x=summary["system"],
             y=summary["leak_rate_observed"],
             name="Observed leak rate",
-            marker_color="#E76F51",
+            marker_color="#DC2626",
         )
     )
     fig.add_trace(
@@ -214,7 +214,7 @@ def leak_coverage_chart(summary: pd.DataFrame) -> go.Figure:
             y=summary["leak_reporting_coverage"],
             name="Leak reporting coverage",
             mode="lines+markers",
-            marker_color="#264653",
+            marker_color="#2563EB",
             line=dict(width=2),
         )
     )
@@ -228,11 +228,11 @@ def leak_coverage_chart(summary: pd.DataFrame) -> go.Figure:
 
 def stacked_quality_chart(status_df: pd.DataFrame, x: str = "system") -> go.Figure:
     color_map = {
-        "Usable": "#2A9D8F",
-        "Aggregate": "#E9C46A",
-        "Estimated": "#F4A261",
-        "Review Required": "#B66DFF",
-        "Event Only": "#E76F51",
+        "Usable": "#2563EB",
+        "Aggregate": "#94A3B8",
+        "Estimated": "#D97706",
+        "Review Required": "#7C3AED",
+        "Event Only": "#DC2626",
     }
     fig = px.bar(
         status_df,
@@ -271,7 +271,7 @@ def heatmap_chart(
 
 
 def horizontal_ranking_chart(
-    df: pd.DataFrame, category_col: str, value_col: str, title: str, color: str = "#2A9D8F"
+    df: pd.DataFrame, category_col: str, value_col: str, title: str, color: str = "#2563EB"
 ) -> go.Figure:
     trimmed = df.head(12).sort_values(value_col, ascending=True)
     fig = go.Figure(
@@ -326,7 +326,7 @@ def crop_heatmap(df: pd.DataFrame) -> go.Figure:
     fig = px.imshow(
         pivot,
         aspect="auto",
-        color_continuous_scale="YlGn",
+        color_continuous_scale="Blues",
         text_auto=".0f",
     )
     fig.update_layout(title="Crop mix by system", xaxis_title="", yaxis_title="")
@@ -492,7 +492,7 @@ def review_readiness_funnel(df: pd.DataFrame) -> go.Figure:
                 "No human-review flag",
             ],
             x=[total, water_ready, analysis_ready, no_warning, no_review],
-            marker={"color": ["#2563EB", "#0EA5E9", "#059669", "#D97706", "#64748B"]},
+            marker={"color": ["#2563EB", "#3B82F6", "#059669", "#D97706", "#64748B"]},
         )
     )
     fig.update_layout(title="Data readiness funnel")
