@@ -231,6 +231,7 @@ def stacked_quality_chart(status_df: pd.DataFrame, x: str = "system") -> go.Figu
         "Usable": "#2A9D8F",
         "Aggregate": "#E9C46A",
         "Estimated": "#F4A261",
+        "Review Required": "#B66DFF",
         "Event Only": "#E76F51",
     }
     fig = px.bar(

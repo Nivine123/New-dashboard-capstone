@@ -15,7 +15,7 @@ SYSTEM_TYPE_COLORS = {
     "Soil": "#8D6E63",
 }
 
-QUALITY_ORDER = ["Usable", "Aggregate", "Estimated", "Event Only"]
+QUALITY_ORDER = ["Usable", "Aggregate", "Estimated", "Review Required", "Event Only"]
 
 ROW_CONFIDENCE_ORDER = [
     "Strong evidence",

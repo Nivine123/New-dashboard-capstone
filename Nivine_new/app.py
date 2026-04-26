@@ -5,6 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from utils.charts import risk_confidence_scatter, score_bar_chart
+from utils.data_loader import load_cleaning_outputs
 from utils.metrics import (
     build_trust_matrix,
     compute_overview_metrics,
@@ -48,6 +49,28 @@ if df.empty:
 render_comparability_note(context["comparability_note"])
 
 overview = compute_overview_metrics(df)
+cleaning_outputs = load_cleaning_outputs()
+cleaning_frames = cleaning_outputs["frames"]
+cleaning_metadata = cleaning_outputs["metadata"]
+validation_report = cleaning_frames.get("validation_report")
+review_queue = cleaning_frames.get("rows_needing_review")
+validation_counts = (
+    validation_report["severity"].value_counts().to_dict()
+    if validation_report is not None
+    and not validation_report.empty
+    and "severity" in validation_report.columns
+    else {}
+)
+review_rows = (
+    len(review_queue)
+    if review_queue is not None and not review_queue.empty
+    else int(cleaning_metadata.get("rows_needing_review", 0) or 0)
+)
+dataset_label = (
+    f"{context['dataset_path'].parent.name}/{context['dataset_path'].name}"
+    if context["dataset_path"].parent.name == "outputs"
+    else context["dataset_path"].name
+)
 summary = compute_system_summary(df)
 scorecard, _ = build_system_scorecard(
     summary, mixed_types=df["system_type"].nunique() > 1
@@ -85,6 +108,34 @@ with right:
         The active slice contains **{overview['total_observations']} observations**, spanning **{overview['active_date_range']}**, across **{overview['system_count']} greenhouse systems**.
         """
     )
+
+st.markdown("### Cleaning pipeline snapshot")
+pipeline_cards = [
+    (
+        "Primary cleaned source",
+        dataset_label,
+        "Project-relative file used by the dashboard.",
+    ),
+    (
+        "Validation passes",
+        f"{validation_counts.get('pass', 0):,}",
+        "Pass-level checks from the validation report.",
+    ),
+    (
+        "Validation warnings",
+        f"{validation_counts.get('warning', 0):,}",
+        "Warning-level checks that should guide interpretation.",
+    ),
+    (
+        "Rows in review queue",
+        f"{review_rows:,}",
+        "Rows exported for human review by the cleaning notebook.",
+    ),
+]
+pipeline_columns = st.columns(4, gap="medium")
+for column, card in zip(pipeline_columns, pipeline_cards):
+    with column:
+        render_metric_card(*card)
 
 metric_items = [
     ("Total observations", f"{overview['total_observations']:,}", "Rows currently in scope after sidebar filtering."),

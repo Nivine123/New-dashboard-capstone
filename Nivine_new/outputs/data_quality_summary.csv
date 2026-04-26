@@ -1,0 +1,112 @@
+area,finding,count,severity
+source,input file,cleaned_data.csv,info
+source,original rows,276,info
+source,original columns,56,info
+source,csv delimiter from csv_sniffer,"','",info
+source,csv encoding,utf-8-sig,info
+domain,hydroponic_greenhouse,28,info
+columns,columns renamed to snake_case,7,info
+columns,source columns renamed to avoid provenance collision,7,warning
+duplicates,exact duplicate rows removed,0,info
+duplicates,possible normalized duplicate rows flagged,0,info
+review,rows needing human review,86,warning
+missing_values,time missing-like values,1,warning
+missing_values,input_observed_at missing-like values,1,warning
+missing_values,input_review_reasons missing-like values,191,warning
+missing_values,water_in_return missing-like values,132,warning
+missing_values,mins_added missing-like values,182,warning
+missing_values,return_now missing-like values,181,warning
+missing_values,nutrient_solution missing-like values,221,warning
+missing_values,ph_down missing-like values,242,warning
+missing_values,how_much_consumed missing-like values,140,warning
+missing_values,leak_or_no missing-like values,119,warning
+missing_values,how_many_planted missing-like values,136,warning
+missing_values,problems missing-like values,240,warning
+missing_values,plant missing-like values,160,warning
+missing_values,seed_or_seedling missing-like values,160,warning
+missing_values,age missing-like values,160,warning
+missing_values,watered_amount missing-like values,165,warning
+missing_values,how_many_plants_planted missing-like values,160,warning
+missing_values,problems_faced missing-like values,267,warning
+missing_values,how_much_consumed_raw missing-like values,140,warning
+missing_values,leak_or_no_raw missing-like values,119,warning
+missing_values,mins_added_raw missing-like values,182,warning
+missing_values,ph_down_raw missing-like values,242,warning
+missing_values,plant_raw missing-like values,160,warning
+missing_values,return_now_raw missing-like values,181,warning
+missing_values,seed_or_seedling_raw missing-like values,160,warning
+missing_values,time_raw missing-like values,1,warning
+missing_values,water_in_return_raw missing-like values,132,warning
+missing_values,watered_amount_raw missing-like values,165,warning
+missing_values,mins_added_minutes missing-like values,200,warning
+missing_values,mins_added_parse_status missing-like values,182,warning
+missing_values,water_in_return_liters missing-like values,135,warning
+missing_values,water_in_return_liters_parse_status missing-like values,132,warning
+missing_values,return_now_liters missing-like values,181,warning
+missing_values,return_now_liters_parse_status missing-like values,181,warning
+missing_values,how_much_consumed_liters missing-like values,140,warning
+missing_values,how_much_consumed_liters_parse_status missing-like values,140,warning
+missing_values,watered_amount_liters missing-like values,182,warning
+missing_values,watered_amount_liters_parse_status missing-like values,165,warning
+missing_values,ph_down_milliliters missing-like values,249,warning
+missing_values,ph_down_milliliters_parse_status missing-like values,242,warning
+missing_values,leak_reported missing-like values,119,warning
+missing_values,problem_notes missing-like values,231,warning
+missing_values,planting_notes missing-like values,20,warning
+messy_text,water_in_return messy/uncertain text patterns,1,warning
+messy_text,how_much_consumed messy/uncertain text patterns,4,warning
+messy_text,problems messy/uncertain text patterns,4,warning
+messy_text,seed_or_seedling messy/uncertain text patterns,28,warning
+messy_text,age messy/uncertain text patterns,2,warning
+messy_text,watered_amount messy/uncertain text patterns,4,warning
+messy_text,problems_faced messy/uncertain text patterns,1,warning
+messy_text,how_much_consumed_raw messy/uncertain text patterns,5,warning
+messy_text,seed_or_seedling_raw messy/uncertain text patterns,28,warning
+messy_text,water_in_return_raw messy/uncertain text patterns,1,warning
+messy_text,watered_amount_raw messy/uncertain text patterns,4,warning
+messy_text,problem_notes messy/uncertain text patterns,5,warning
+parse_status,date_date_parse_status: parsed,276,info
+parse_status,mins_added_minutes_parse_status: missing,182,info
+parse_status,mins_added_minutes_parse_status: parsed,76,info
+parse_status,mins_added_minutes_parse_status: manual_entry,17,warning
+parse_status,mins_added_minutes_parse_status: no_duration_pattern,1,warning
+parse_status,water_in_return_liters_parse_status: parsed,141,info
+parse_status,water_in_return_liters_parse_status: missing,132,info
+parse_status,water_in_return_liters_parse_status: ambiguous_multiple_quantities,2,warning
+parse_status,water_in_return_liters_parse_status: ambiguous_range,1,warning
+parse_status,return_now_liters_parse_status: missing,181,info
+parse_status,return_now_liters_parse_status: parsed,95,info
+parse_status,how_much_consumed_liters_parse_status: missing,140,info
+parse_status,how_much_consumed_liters_parse_status: parsed,136,info
+parse_status,watered_amount_liters_parse_status: missing,165,info
+parse_status,watered_amount_liters_parse_status: parsed,94,info
+parse_status,watered_amount_liters_parse_status: ambiguous_multiple_quantities,16,warning
+parse_status,watered_amount_liters_parse_status: no_quantity_pattern,1,warning
+parse_status,ph_down_milliliters_parse_status: missing,242,info
+parse_status,ph_down_milliliters_parse_status: parsed,27,info
+parse_status,ph_down_milliliters_parse_status: ambiguous_multiple_quantities,7,warning
+parse_status,mins_added_minutes_numeric_parse_status: missing,200,info
+parse_status,mins_added_minutes_numeric_parse_status: parsed,76,info
+parse_status,water_in_return_liters_numeric_parse_status: parsed,141,info
+parse_status,water_in_return_liters_numeric_parse_status: missing,135,info
+parse_status,return_now_liters_numeric_parse_status: missing,181,info
+parse_status,return_now_liters_numeric_parse_status: parsed,95,info
+parse_status,how_much_consumed_liters_numeric_parse_status: missing,140,info
+parse_status,how_much_consumed_liters_numeric_parse_status: parsed,136,info
+parse_status,watered_amount_liters_numeric_parse_status: missing,182,info
+parse_status,watered_amount_liters_numeric_parse_status: parsed,94,info
+parse_status,ph_down_milliliters_numeric_parse_status: missing,249,info
+parse_status,ph_down_milliliters_numeric_parse_status: parsed,27,info
+review_reason,how_much_consumed_contains_context_or_uncertainty,25,warning
+review_reason,mins_added_duration_requires_review,18,warning
+review_reason,watered_amount_quantity_requires_review,17,warning
+review_reason,how_much_consumed_liters_possible_outlier,12,warning
+review_reason,water_in_return_liters_possible_outlier,10,warning
+review_reason,watered_amount_liters_possible_outlier,9,warning
+review_reason,ph_down_quantity_requires_review,7,warning
+review_reason,watered_amount_contains_context_or_uncertainty,6,warning
+review_reason,water_in_return_quantity_requires_review,3,warning
+review_reason,water_in_return_contains_context_or_uncertainty,1,warning
+review_reason,mins_added_minutes_possible_outlier,1,warning
+email_validation,no email columns detected,0,info
+phone_validation,no phone columns detected,0,info
