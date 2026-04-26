@@ -6,9 +6,15 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from utils.charts import crop_heatmap, histogram_chart
+from utils.charts import crop_heatmap, crop_sunburst_chart, histogram_chart
 from utils.metrics import compute_crop_counts, compute_system_summary, format_num, format_pct
-from utils.ui import build_page_context, render_comparability_note, render_hero, render_metric_card
+from utils.ui import (
+    build_page_context,
+    render_chart_conclusion,
+    render_comparability_note,
+    render_hero,
+    render_metric_card,
+)
 
 context = build_page_context("Crop / Plant Insights")
 df = context["df"]
@@ -94,11 +100,26 @@ with plant_left:
         showlegend=False,
     )
     st.plotly_chart(plant_fig, use_container_width=True)
+    render_chart_conclusion(
+        "Average recorded plant count by system.",
+        "Plant-count differences provide useful scale context, but they should not be turned into productivity claims unless coverage is consistent.",
+    )
 with plant_right:
     if crop_counts.empty:
         st.info("No crop tokens remain after the current filters.")
     else:
         st.plotly_chart(crop_heatmap(crop_counts), use_container_width=True)
+        render_chart_conclusion(
+            "Crop-token counts across systems.",
+            "Crop mix explains why some system comparisons are not perfectly like-for-like.",
+        )
+
+if not crop_counts.empty:
+    st.plotly_chart(crop_sunburst_chart(crop_counts), use_container_width=True)
+    render_chart_conclusion(
+        "Crop hierarchy nested by system.",
+        "The sunburst makes crop concentration visible and helps separate broad crop diversity from system-specific crop focus.",
+    )
 
 stage_left, stage_right = st.columns(2, gap="large")
 with stage_left:
@@ -124,6 +145,10 @@ with stage_left:
             plot_bgcolor="rgba(255,255,255,0.88)",
         )
         st.plotly_chart(stage_fig, use_container_width=True)
+        render_chart_conclusion(
+            "Growth-stage distribution by system.",
+            "Uneven growth-stage mix can affect water demand and risk, so it should be considered before comparing systems directly.",
+        )
 
 with stage_right:
     age_df = df[df["age_days"].notna()].copy()
@@ -139,6 +164,10 @@ with stage_right:
                 bins=20,
             ),
             use_container_width=True,
+        )
+        render_chart_conclusion(
+            "Age distribution of plants where age is available.",
+            "Age spread provides lifecycle context; sparse or single-system age data should stay descriptive.",
         )
 
 st.markdown("### Planting behavior over time")
@@ -165,6 +194,10 @@ else:
         plot_bgcolor="rgba(255,255,255,0.88)",
     )
     st.plotly_chart(planting_fig, use_container_width=True)
+    render_chart_conclusion(
+        "Plant-count trend through time by system.",
+        "Changes in plant count can explain shifts in water use or workload, especially around planting and harvest periods.",
+    )
 
 st.markdown("### Crop-system associations")
 crop_assoc_rows = []
