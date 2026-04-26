@@ -157,7 +157,7 @@ with rank_left:
             category_col="problem_category",
             value_col="count",
             title="Most common problem categories",
-            color="#E76F51",
+            color="#DC2626",
         ),
         width="stretch",
     )
@@ -177,7 +177,7 @@ with rank_right:
             category_col="leak_location",
             value_col="count",
             title="Most common leak locations",
-            color="#264653",
+            color="#2563EB",
         ),
         width="stretch",
     )
