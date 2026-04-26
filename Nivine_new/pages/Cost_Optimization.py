@@ -316,7 +316,7 @@ fig_cost_bar = px.bar(
 fig_cost_bar.update_traces(texttemplate="$%{text:,.2f}", textposition="outside")
 fig_cost_bar.update_layout(yaxis_tickprefix="$", showlegend=False)
 
-st.plotly_chart(fig_cost_bar, use_container_width=True)
+st.plotly_chart(fig_cost_bar, width="stretch")
 render_chart_conclusion(
     "Estimated total cost by system under the current sidebar assumptions.",
     "When assumptions are zero, the chart intentionally shows no cost burden; once real values are entered, the highest bar becomes the first cost-review target.",
@@ -347,7 +347,7 @@ fig_breakdown.update_layout(
     legend_title_text="Cost Driver",
 )
 
-st.plotly_chart(fig_breakdown, use_container_width=True)
+st.plotly_chart(fig_breakdown, width="stretch")
 render_chart_conclusion(
     "Estimated cost split into water, nutrients, pH adjustment, duration, workload, and risk/loss components.",
     "The largest segment in each bar points to the cost driver that should be optimized first.",
@@ -363,7 +363,7 @@ if total_cost > 0:
         title="Cost Driver Hierarchy",
     )
     fig_treemap.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)")
-    st.plotly_chart(fig_treemap, use_container_width=True)
+    st.plotly_chart(fig_treemap, width="stretch")
     render_chart_conclusion(
         "A hierarchical view of which systems and cost components consume the modeled budget.",
         "Large rectangles identify where a practical optimization plan can have the biggest financial impact.",
@@ -399,7 +399,7 @@ fig_cost_risk = px.scatter(
 fig_cost_risk.update_traces(textposition="top center")
 fig_cost_risk.update_layout(xaxis_tickprefix="$")
 
-st.plotly_chart(fig_cost_risk, use_container_width=True)
+st.plotly_chart(fig_cost_risk, width="stretch")
 render_chart_conclusion(
     "Estimated cost compared with operational risk score.",
     "Systems that sit high on both axes deserve priority because they combine cost pressure with reliability or maintenance concerns.",
@@ -428,7 +428,7 @@ fig_workload = px.scatter(
 fig_workload.update_traces(textposition="top center")
 fig_workload.update_layout(yaxis_tickprefix="$")
 
-st.plotly_chart(fig_workload, use_container_width=True)
+st.plotly_chart(fig_workload, width="stretch")
 render_chart_conclusion(
     "Manual intervention burden compared with estimated cost.",
     "A positive relationship suggests automation, monitoring, or process redesign could reduce both labor pressure and modeled cost.",
@@ -457,7 +457,7 @@ if total_cost > 0:
         paper_bgcolor="rgba(0,0,0,0)",
         yaxis_tickprefix="$",
     )
-    st.plotly_chart(fig_waterfall, use_container_width=True)
+    st.plotly_chart(fig_waterfall, width="stretch")
     render_chart_conclusion(
         "How each entered cost driver contributes to the total modeled cost.",
         "The waterfall is useful for capstone decision support because it makes the budget impact of each assumption transparent.",
@@ -519,7 +519,7 @@ table = table.rename(
     }
 )
 
-st.dataframe(table, use_container_width=True, hide_index=True)
+st.dataframe(table, width="stretch", hide_index=True)
 
 
 # -----------------------------

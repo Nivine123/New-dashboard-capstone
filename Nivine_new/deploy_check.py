@@ -16,14 +16,31 @@ REQUIRED_FILES = [
     "requirements.txt",
     "runtime.txt",
     ".streamlit/config.toml",
-    "outputs/cleaned_data.csv",
 ]
-OPTIONAL_OUTPUTS = [
+REQUIRED_DATA_FILES = [
+    "outputs/cleaned_data.csv",
     "outputs/validation_report.csv",
     "outputs/data_quality_summary.csv",
     "outputs/rows_needing_review.csv",
     "outputs/data_dictionary.csv",
     "outputs/cleaning_metadata.json",
+]
+EXPECTED_PAGES = [
+    "pages/Cleaned_Data_Hub.py",
+    "pages/System_Comparison.py",
+    "pages/Water_Resource_Analytics.py",
+    "pages/Operational_Risk_Issues.py",
+    "pages/Crop_Plant_Insights.py",
+    "pages/Data_Quality_Confidence.py",
+    "pages/Trends_Over_Time.py",
+    "pages/Recommendations_Decision_Support.py",
+    "pages/Methodology_Capstone_Notes.py",
+    "pages/Cost_Optimization.py",
+]
+BANNED_PATH_SNIPPETS = [
+    "/" "Users/",
+    "Desktop/" "nivo",
+    "Desktop/" "New-dashboard-capstone",
 ]
 
 
@@ -39,7 +56,8 @@ def check_syntax() -> None:
 
 
 def check_files() -> None:
-    missing = [file for file in REQUIRED_FILES if not (PROJECT_ROOT / file).exists()]
+    expected = REQUIRED_FILES + REQUIRED_DATA_FILES + EXPECTED_PAGES
+    missing = [file for file in expected if not (PROJECT_ROOT / file).exists()]
     if missing:
         raise FileNotFoundError("Missing required deploy files: " + ", ".join(missing))
 
@@ -59,16 +77,40 @@ def check_data() -> None:
 
     print(f"cleaned rows: {len(cleaned):,}")
     print(f"cleaned columns: {cleaned.shape[1]:,}")
-    print("Optional deployment data files:")
-    for file in OPTIONAL_OUTPUTS:
+    print("Bundled deployment data files:")
+    for file in REQUIRED_DATA_FILES:
         status = "available" if (PROJECT_ROOT / file).exists() else "missing"
         print(f"- {file}: {status}")
+
+
+def check_no_local_paths() -> None:
+    """Keep deploy-facing code/docs/metadata free of machine-local paths."""
+
+    paths = [
+        PROJECT_ROOT / "streamlit_app.py",
+        PROJECT_ROOT / "app.py",
+        PROJECT_ROOT / "README.md",
+        PROJECT_ROOT / "DEPLOYMENT.md",
+        PROJECT_ROOT / "deploy_check.py",
+        PROJECT_ROOT / ".streamlit" / "config.toml",
+        PROJECT_ROOT / "outputs" / "cleaning_metadata.json",
+        *sorted((PROJECT_ROOT / "pages").glob("*.py")),
+        *sorted((PROJECT_ROOT / "utils").glob("*.py")),
+    ]
+    leaks: list[str] = []
+    for path in paths:
+        text = path.read_text(encoding="utf-8")
+        if any(snippet in text for snippet in BANNED_PATH_SNIPPETS):
+            leaks.append(str(path.relative_to(PROJECT_ROOT)))
+    if leaks:
+        raise ValueError("Local absolute path references found in: " + ", ".join(leaks))
 
 
 def main() -> None:
     check_files()
     check_syntax()
     check_data()
+    check_no_local_paths()
     print("Deployment readiness passed.")
 
 

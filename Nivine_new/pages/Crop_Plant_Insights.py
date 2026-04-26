@@ -99,7 +99,7 @@ with plant_left:
         plot_bgcolor="rgba(255,255,255,0.88)",
         showlegend=False,
     )
-    st.plotly_chart(plant_fig, use_container_width=True)
+    st.plotly_chart(plant_fig, width="stretch")
     render_chart_conclusion(
         "Average recorded plant count by system.",
         "Plant-count differences provide useful scale context, but they should not be turned into productivity claims unless coverage is consistent.",
@@ -108,14 +108,14 @@ with plant_right:
     if crop_counts.empty:
         st.info("No crop tokens remain after the current filters.")
     else:
-        st.plotly_chart(crop_heatmap(crop_counts), use_container_width=True)
+        st.plotly_chart(crop_heatmap(crop_counts), width="stretch")
         render_chart_conclusion(
             "Crop-token counts across systems.",
             "Crop mix explains why some system comparisons are not perfectly like-for-like.",
         )
 
 if not crop_counts.empty:
-    st.plotly_chart(crop_sunburst_chart(crop_counts), use_container_width=True)
+    st.plotly_chart(crop_sunburst_chart(crop_counts), width="stretch")
     render_chart_conclusion(
         "Crop hierarchy nested by system.",
         "The sunburst makes crop concentration visible and helps separate broad crop diversity from system-specific crop focus.",
@@ -144,7 +144,7 @@ with stage_left:
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(255,255,255,0.88)",
         )
-        st.plotly_chart(stage_fig, use_container_width=True)
+        st.plotly_chart(stage_fig, width="stretch")
         render_chart_conclusion(
             "Growth-stage distribution by system.",
             "Uneven growth-stage mix can affect water demand and risk, so it should be considered before comparing systems directly.",
@@ -163,7 +163,7 @@ with stage_right:
                 title="Age distribution by system",
                 bins=20,
             ),
-            use_container_width=True,
+            width="stretch",
         )
         render_chart_conclusion(
             "Age distribution of plants where age is available.",
@@ -193,7 +193,7 @@ else:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(255,255,255,0.88)",
     )
-    st.plotly_chart(planting_fig, use_container_width=True)
+    st.plotly_chart(planting_fig, width="stretch")
     render_chart_conclusion(
         "Plant-count trend through time by system.",
         "Changes in plant count can explain shifts in water use or workload, especially around planting and harvest periods.",
@@ -230,7 +230,7 @@ crop_assoc_df = pd.DataFrame(crop_assoc_rows).sort_values(
 if crop_assoc_df.empty:
     st.info("No crop-system combinations meet the minimum evidence threshold of five observations.")
 else:
-    st.dataframe(crop_assoc_df, use_container_width=True, hide_index=True)
+    st.dataframe(crop_assoc_df, width="stretch", hide_index=True)
 
 with st.expander("Interpretation caution", expanded=False):
     st.markdown(

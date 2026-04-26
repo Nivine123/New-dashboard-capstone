@@ -68,7 +68,7 @@ st.plotly_chart(
         dictionary_rows=len(frames.get("data_dictionary", [])),
         has_metadata=bool(metadata),
     ),
-    use_container_width=True,
+    width="stretch",
 )
 render_chart_conclusion(
     "The cleaning workflow from raw workbook through notebook artifacts into the deployed dashboard.",
@@ -158,6 +158,6 @@ st.dataframe(
             "confidence_label",
         ]
     ],
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
 )
