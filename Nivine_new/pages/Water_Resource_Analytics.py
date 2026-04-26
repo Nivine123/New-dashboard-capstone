@@ -88,7 +88,7 @@ with trend_left:
             title="Daily water use by system",
             y_title="Liters",
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "Daily water-use totals by greenhouse system.",
@@ -104,7 +104,7 @@ with trend_right:
             y_title="Liters",
             rolling=True,
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "A 7-day rolling water-use average by system.",
@@ -120,7 +120,7 @@ with dist_left:
             y="water_use_l",
             title="Water-use distribution by system",
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "The spread of analysis-ready water-use observations for each system.",
@@ -135,7 +135,7 @@ with dist_right:
             title="Water-use density / histogram",
             bins=24,
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "The frequency distribution of water-use values by system.",
@@ -163,7 +163,7 @@ return_fig = px.bar(
     title="Return-water behavior and addition duration",
 )
 return_fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(255,255,255,0.88)")
-st.plotly_chart(return_fig, use_container_width=True)
+st.plotly_chart(return_fig, width="stretch")
 render_chart_conclusion(
     "Average return-water levels and median water-addition duration by system.",
     "Return-water and duration patterns indicate how much operational effort and flow balance differ across systems.",
@@ -178,7 +178,7 @@ with resource_left:
             title="Nutrient additions over time",
             y_title="Total nutrient added (mL)",
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "Daily nutrient addition quantities by system.",
@@ -192,7 +192,7 @@ with resource_right:
             title="pH-down activity over time",
             y_title="pH-down added (mL)",
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "Daily pH-down activity by system.",
@@ -206,7 +206,7 @@ st.markdown(
 )
 st.plotly_chart(
     stacked_quality_chart(quality["status_by_system"]),
-    use_container_width=True,
+    width="stretch",
 )
 render_chart_conclusion(
     "Data-quality composition for rows used in this resource view.",

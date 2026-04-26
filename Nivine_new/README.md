@@ -4,16 +4,29 @@ A multi-page Streamlit application for a Masters in Data Analytics thesis focuse
 
 ## Project structure
 
-- `app.py`: Executive Overview page
 - `streamlit_app.py`: deployment-friendly entrypoint for Streamlit Community Cloud
-- `pages/`: dedicated thesis pages for comparison, resources, risk, crops, confidence, trends, recommendations, and methodology
+- `app.py`: Executive Overview page
+- `pages/`: dedicated thesis pages for comparison, resources, risk, crops, confidence, trends, recommendations, methodology, and cost optimization
 - `utils/`: reusable logic for loading, preprocessing, metrics, scoring, charts, recommendations, and shared UI
 - `outputs/cleaned_data.csv`: primary cleaned dataset used by the app
-- `outputs/`: optional validation, quality, review-queue, data-dictionary, and metadata reports
+- `outputs/`: bundled validation, quality, review-queue, data-dictionary, and metadata reports
 - `.streamlit/config.toml`: deployment theme and Streamlit runtime settings
 - `deploy_check.py`: local readiness check for syntax, required files, and data availability
 - `requirements.txt`: Python dependencies
 - `runtime.txt`: pinned Python runtime for cloud deployment
+
+## Included pages
+
+- `Cleaned_Data_Hub.py`
+- `System_Comparison.py`
+- `Water_Resource_Analytics.py`
+- `Operational_Risk_Issues.py`
+- `Crop_Plant_Insights.py`
+- `Data_Quality_Confidence.py`
+- `Trends_Over_Time.py`
+- `Recommendations_Decision_Support.py`
+- `Methodology_Capstone_Notes.py`
+- `Cost_Optimization.py`
 
 ## Run instructions
 
@@ -50,10 +63,17 @@ This project is prepared for Streamlit Community Cloud.
    - `pages/`
    - `utils/`
    - `outputs/cleaned_data.csv`
-   - optional `outputs/` report files
+   - `outputs/validation_report.csv`
+   - `outputs/data_quality_summary.csv`
+   - `outputs/rows_needing_review.csv`
+   - `outputs/data_dictionary.csv`
+   - `outputs/cleaning_metadata.json`
    - `.streamlit/config.toml`
    - `requirements.txt`
    - `runtime.txt`
+   - `deploy_check.py`
+   - `README.md`
+   - `DEPLOYMENT.md`
 2. In Streamlit Community Cloud, create a new app from the repository.
 3. Set the app entry file to `streamlit_app.py` if Streamlit does not auto-detect it.
 4. Redeploy whenever you update the code or dataset.
@@ -64,6 +84,7 @@ This project is prepared for Streamlit Community Cloud.
 - No local secrets are required for deployment.
 - The app uses only file-based local data, so there is no database or API setup step.
 - The dashboard is multi-page and Streamlit will automatically detect the `pages/` directory in deployment.
+- The deployment check verifies that the bundled cleaned outputs exist and that deploy-facing files do not contain machine-local absolute paths.
 
 ## Analytical logic used
 

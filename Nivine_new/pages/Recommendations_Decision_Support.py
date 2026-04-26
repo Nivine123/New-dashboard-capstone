@@ -100,7 +100,7 @@ chart_left, chart_right = st.columns(2, gap="large")
 with chart_left:
     decision_fig = score_bar_chart(scorecard)
     decision_fig.update_layout(title="Decision dimensions by system")
-    st.plotly_chart(decision_fig, use_container_width=True)
+    st.plotly_chart(decision_fig, width="stretch")
     render_chart_conclusion(
         "The same decision dimensions used to generate the recommendations.",
         "Recommendations are strongest when the score pattern and evidence confidence point in the same direction.",
@@ -108,14 +108,14 @@ with chart_left:
 with chart_right:
     risk_fig = risk_confidence_scatter(scorecard)
     risk_fig.update_layout(title="Action priority: risk versus confidence")
-    st.plotly_chart(risk_fig, use_container_width=True)
+    st.plotly_chart(risk_fig, width="stretch")
     render_chart_conclusion(
         "Which systems combine operational risk with enough confidence to justify action.",
         "The best first actions target visible risk where the data quality is strong enough to support intervention.",
     )
 
 st.markdown("### Recommendation table")
-st.dataframe(recommendations, use_container_width=True, hide_index=True)
+st.dataframe(recommendations, width="stretch", hide_index=True)
 
 if not recommendations.empty and "Confidence level" in recommendations.columns:
     rec_counts = (
@@ -133,14 +133,14 @@ if not recommendations.empty and "Confidence level" in recommendations.columns:
         color_discrete_map={"High": "#2563EB", "Moderate": "#D97706", "Low": "#DC2626"},
     )
     rec_fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)")
-    st.plotly_chart(rec_fig, use_container_width=True)
+    st.plotly_chart(rec_fig, width="stretch")
     render_chart_conclusion(
         "The recommendation list grouped by confidence level.",
         "A recommendation portfolio with more high-confidence items is safer to act on immediately; moderate items are better for follow-up validation.",
     )
 
 st.markdown("### Can we trust this before acting?")
-st.dataframe(trust_matrix, use_container_width=True, hide_index=True)
+st.dataframe(trust_matrix, width="stretch", hide_index=True)
 
 st.markdown("### System-specific recommendations")
 system_cols = st.columns(len(summary), gap="medium")

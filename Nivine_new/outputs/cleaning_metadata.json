@@ -1,6 +1,6 @@
 {
   "input_file": "cleaned_data.csv",
-  "input_path": "/Users/jamilshoujah/Desktop/nivo/cleaned_data.csv",
+  "input_path": "outputs/cleaned_data.csv",
   "input_file_size_bytes": 142865,
   "input_sha256_before": "85cb343c0e42d7f3e6728cb4c7c502aa3451e018e273a855eac4d11e2806837a",
   "original_rows": 276,
@@ -115,12 +115,12 @@
     "observed_at"
   ],
   "output_files": {
-    "cleaned_data": "/Users/jamilshoujah/Desktop/nivo/outputs/cleaned_data.csv",
-    "validation_report": "/Users/jamilshoujah/Desktop/nivo/outputs/validation_report.csv",
-    "data_quality_summary": "/Users/jamilshoujah/Desktop/nivo/outputs/data_quality_summary.csv",
-    "rows_needing_review": "/Users/jamilshoujah/Desktop/nivo/outputs/rows_needing_review.csv",
-    "data_dictionary": "/Users/jamilshoujah/Desktop/nivo/outputs/data_dictionary.csv",
-    "cleaning_metadata": "/Users/jamilshoujah/Desktop/nivo/outputs/cleaning_metadata.json"
+    "cleaned_data": "outputs/cleaned_data.csv",
+    "validation_report": "outputs/validation_report.csv",
+    "data_quality_summary": "outputs/data_quality_summary.csv",
+    "rows_needing_review": "outputs/rows_needing_review.csv",
+    "data_dictionary": "outputs/data_dictionary.csv",
+    "cleaning_metadata": "outputs/cleaning_metadata.json"
   },
   "input_sha256_after": "85cb343c0e42d7f3e6728cb4c7c502aa3451e018e273a855eac4d11e2806837a"
 }

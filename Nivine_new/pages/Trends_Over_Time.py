@@ -55,7 +55,7 @@ with top_left:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(255,255,255,0.88)",
     )
-    st.plotly_chart(activity_fig, use_container_width=True)
+    st.plotly_chart(activity_fig, width="stretch")
     render_chart_conclusion(
         "Observation counts through time by system.",
         "Uneven logging intensity can shape apparent trends, so activity volume should be checked before reading performance movement.",
@@ -68,7 +68,7 @@ with top_right:
             title="Weekly water-use trend",
             y_title="Liters per week",
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "Weekly water-use totals by system.",
@@ -84,7 +84,7 @@ with mid_left:
             title="Weekly nutrient additions",
             y_title="mL per week",
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "Weekly nutrient addition totals by system.",
@@ -113,7 +113,7 @@ with mid_right:
         yaxis_title="Events per week",
         xaxis_title="",
     )
-    st.plotly_chart(issue_weekly_fig, use_container_width=True)
+    st.plotly_chart(issue_weekly_fig, width="stretch")
     render_chart_conclusion(
         "Weekly issue and leak event trends.",
         "Clusters identify periods for root-cause review and help connect operational events to water or workload patterns.",
@@ -136,7 +136,7 @@ with roll_left:
             y_title="Liters",
             rolling=True,
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "A rolling 7-day water-use average.",
@@ -152,7 +152,7 @@ with roll_right:
             y_title="Average issue events",
             rolling=True,
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "A rolling 14-day issue intensity signal.",
@@ -168,7 +168,7 @@ with bottom_left:
             title="Weekly manual interventions",
             y_title="Manual events per week",
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "Manual intervention events summarized weekly.",
@@ -182,7 +182,7 @@ with bottom_right:
             title="4-week smoothed water-use trend",
             y_title="Liters",
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "A 4-week smoothed water-use view.",
@@ -190,7 +190,7 @@ with bottom_right:
     )
 
 st.markdown("### Observation rhythm")
-st.plotly_chart(weekday_density_heatmap(df), use_container_width=True)
+st.plotly_chart(weekday_density_heatmap(df), width="stretch")
 render_chart_conclusion(
     "Observation density by weekday and system.",
     "Strong weekday concentration can reflect measurement routine rather than system behavior, so it should temper temporal conclusions.",

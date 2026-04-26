@@ -102,7 +102,7 @@ summary_view = scorecard[
         "confidence_label": "Confidence",
     }
 )
-st.dataframe(summary_view, use_container_width=True, hide_index=True)
+st.dataframe(summary_view, width="stretch", hide_index=True)
 
 risk_left, risk_right = st.columns(2, gap="large")
 with risk_left:
@@ -114,7 +114,7 @@ with risk_left:
             "leak_reported_day_share": "leak_reporting_coverage",
         }
     )
-    st.plotly_chart(leak_coverage_chart(leak_summary), use_container_width=True)
+    st.plotly_chart(leak_coverage_chart(leak_summary), width="stretch")
     render_chart_conclusion(
         "Observed leak rate compared with leak-reporting coverage by system.",
         "Leak risk is only convincing when coverage is high; low coverage means the observed leak rate is a lower-bound estimate.",
@@ -138,7 +138,7 @@ with risk_right:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(255,255,255,0.88)",
     )
-    st.plotly_chart(severity_fig, use_container_width=True)
+    st.plotly_chart(severity_fig, width="stretch")
     render_chart_conclusion(
         "Leak records split by severity class for each system.",
         "Severity mix helps distinguish occasional minor events from systems with more serious water-loss risk.",
@@ -159,7 +159,7 @@ with rank_left:
             title="Most common problem categories",
             color="#E76F51",
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "The most frequent operational issue categories across the current filter scope.",
@@ -179,7 +179,7 @@ with rank_right:
             title="Most common leak locations",
             color="#264653",
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "The most common leak-location tokens among rows where leaks are reported.",
@@ -187,7 +187,7 @@ with rank_right:
     )
 
 if not problem_counts.empty:
-    st.plotly_chart(risk_treemap(problem_counts), use_container_width=True)
+    st.plotly_chart(risk_treemap(problem_counts), width="stretch")
     render_chart_conclusion(
         "Operational issue composition nested by system and issue category.",
         "The treemap shows which systems and issue families dominate the risk narrative in one view.",
@@ -195,7 +195,7 @@ if not problem_counts.empty:
 
 timeline_left, timeline_right = st.columns(2, gap="large")
 with timeline_left:
-    st.plotly_chart(issue_timeline_chart(daily), use_container_width=True)
+    st.plotly_chart(issue_timeline_chart(daily), width="stretch")
     render_chart_conclusion(
         "Issue and leak events through time by system.",
         "Clusters in the timeline point to operating periods that deserve root-cause review.",
@@ -209,7 +209,7 @@ with timeline_right:
         title="Issue rate heatmap by weekday",
         color_scale="YlOrRd",
     )
-    st.plotly_chart(issue_heatmap_fig, use_container_width=True)
+    st.plotly_chart(issue_heatmap_fig, width="stretch")
     render_chart_conclusion(
         "Issue rates by weekday and system.",
         "Weekday concentration may indicate routine-driven problems, staffing patterns, or repeated observation timing.",
@@ -225,7 +225,7 @@ st.plotly_chart(
         title="Leak rate heatmap by weekday",
         color_scale="YlOrBr",
     ),
-    use_container_width=True,
+    width="stretch",
 )
 render_chart_conclusion(
     "Leak rates by weekday and system.",
