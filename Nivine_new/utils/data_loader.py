@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -11,10 +13,24 @@ import streamlit as st
 
 from utils.constants import QUALITY_ORDER, ROW_CONFIDENCE_ORDER
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+OUTPUTS_DIRNAME = "outputs"
+
 DATASET_CANDIDATES = (
+    "outputs/cleaned_data.csv",
+    "cleaned_data.csv",
     "greenhouse_systems_cleaned(8).csv",
     "greenhouse_systems_cleaned.csv",
 )
+
+CLEANING_OUTPUT_FILES = {
+    "cleaned_data": "cleaned_data.csv",
+    "validation_report": "validation_report.csv",
+    "data_quality_summary": "data_quality_summary.csv",
+    "rows_needing_review": "rows_needing_review.csv",
+    "data_dictionary": "data_dictionary.csv",
+    "cleaning_metadata": "cleaning_metadata.json",
+}
 
 BOOLEAN_COLUMNS = [
     "manual_water_addition",
@@ -75,21 +91,30 @@ TEXT_COLUMNS = [
 
 UNKNOWN_TOKENS = {
     "",
+    "-",
     "unknown",
     "nan",
     "none",
+    "na",
+    "n/a",
     "not reported",
     "no issue recorded",
     "unspecified",
 }
 
-PREPARED_DATA_VERSION = 2
+PREPARED_DATA_VERSION = 3
+
+SYSTEM_NAME_ALIASES = {
+    "A shape and Gutters": "A-shape + Gutters",
+    "A-shape and Gutters": "A-shape + Gutters",
+    "Towers": "Tower",
+}
 
 
 def find_dataset_path(base_dir: Path | None = None) -> Path:
-    """Locate the greenhouse CSV using the requested filename first."""
+    """Locate the greenhouse CSV, preferring the notebook's cleaned output."""
 
-    search_dir = base_dir or Path(__file__).resolve().parents[1]
+    search_dir = base_dir or PROJECT_ROOT
 
     for filename in DATASET_CANDIDATES:
         candidate = search_dir / filename
@@ -101,8 +126,88 @@ def find_dataset_path(base_dir: Path | None = None) -> Path:
         return matches[0]
 
     raise FileNotFoundError(
-        "Could not find greenhouse_systems_cleaned(8).csv or a matching greenhouse_systems_cleaned*.csv file."
+        "Could not find outputs/cleaned_data.csv, cleaned_data.csv, or a greenhouse_systems_cleaned*.csv fallback."
     )
+
+
+def get_cleaning_outputs_dir(base_dir: Path | None = None) -> Path:
+    """Return the project-relative directory used for data-cleaning artifacts."""
+
+    return (base_dir or PROJECT_ROOT) / OUTPUTS_DIRNAME
+
+
+def get_cleaning_output_paths(base_dir: Path | None = None) -> dict[str, Path]:
+    """Build project-relative paths for the optional cleaning-output files."""
+
+    outputs_dir = get_cleaning_outputs_dir(base_dir)
+    return {
+        name: outputs_dir / filename
+        for name, filename in CLEANING_OUTPUT_FILES.items()
+    }
+
+
+@st.cache_data(show_spinner=False)
+def _load_optional_csv(path_str: str, modified_time: float) -> tuple[pd.DataFrame, str | None]:
+    """Read an optional CSV without letting malformed files crash the app."""
+
+    _ = modified_time
+    try:
+        return pd.read_csv(path_str), None
+    except pd.errors.EmptyDataError:
+        return pd.DataFrame(), "File exists but contains no rows."
+    except Exception as exc:  # pragma: no cover - defensive UI guard
+        return pd.DataFrame(), f"{type(exc).__name__}: {exc}"
+
+
+@st.cache_data(show_spinner=False)
+def _load_optional_json(path_str: str, modified_time: float) -> tuple[dict[str, Any], str | None]:
+    """Read an optional JSON metadata file without surfacing stack traces."""
+
+    _ = modified_time
+    try:
+        with Path(path_str).open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        if not isinstance(payload, dict):
+            return {}, "Metadata JSON is valid but does not contain an object."
+        return payload, None
+    except json.JSONDecodeError as exc:
+        return {}, f"Malformed JSON: {exc}"
+    except Exception as exc:  # pragma: no cover - defensive UI guard
+        return {}, f"{type(exc).__name__}: {exc}"
+
+
+def load_cleaning_outputs(base_dir: Path | None = None) -> dict[str, Any]:
+    """Load all cleaning artifacts that exist, with per-file errors and missing-file info."""
+
+    paths = get_cleaning_output_paths(base_dir)
+    frames: dict[str, pd.DataFrame] = {}
+    metadata: dict[str, Any] = {}
+    errors: dict[str, str] = {}
+    missing: list[str] = []
+
+    for name, path in paths.items():
+        if not path.exists():
+            missing.append(name)
+            if name != "cleaning_metadata":
+                frames[name] = pd.DataFrame()
+            continue
+
+        if name == "cleaning_metadata":
+            metadata, error = _load_optional_json(str(path), path.stat().st_mtime)
+        else:
+            frame, error = _load_optional_csv(str(path), path.stat().st_mtime)
+            frames[name] = frame
+
+        if error:
+            errors[name] = error
+
+    return {
+        "paths": paths,
+        "frames": frames,
+        "metadata": metadata,
+        "errors": errors,
+        "missing": missing,
+    }
 
 
 def _normalize_boolean(series: pd.Series) -> pd.Series:
@@ -129,6 +234,272 @@ def _normalize_boolean(series: pd.Series) -> pd.Series:
         .map(mapping)
     )
     return cleaned.fillna(False).astype(bool)
+
+
+def _optional_series(
+    frame: pd.DataFrame, column: str, default: Any = np.nan
+) -> pd.Series:
+    """Return a column or a default-filled series aligned to the frame."""
+
+    if column in frame.columns:
+        return frame[column]
+    return pd.Series(default, index=frame.index)
+
+
+def _first_available(frame: pd.DataFrame, columns: list[str], default: Any = np.nan) -> pd.Series:
+    """Return the first non-null value across candidate columns."""
+
+    result = pd.Series(np.nan, index=frame.index)
+    for column in columns:
+        if column in frame.columns:
+            result = result.combine_first(frame[column])
+    if not (isinstance(default, float) and pd.isna(default)):
+        result = result.fillna(default)
+    return result
+
+
+def _clean_text(series: pd.Series, default: str = "Unknown") -> pd.Series:
+    """Normalize text fields while preserving useful source values."""
+
+    cleaned = series.fillna("").astype(str).str.strip()
+    missing = cleaned.str.lower().isin(UNKNOWN_TOKENS)
+    return cleaned.mask(missing, default)
+
+
+def _has_text(series: pd.Series) -> pd.Series:
+    """Return True where a text-like source value carries useful information."""
+
+    return ~_clean_text(series, default="").eq("")
+
+
+def _extract_first_quantity(series: pd.Series, skip_pattern: str | None = None) -> pd.Series:
+    """Extract a conservative first numeric quantity from messy source text."""
+
+    text = series.fillna("").astype(str)
+    extracted = pd.to_numeric(
+        text.str.extract(r"(-?\d+(?:\.\d+)?)", expand=False),
+        errors="coerce",
+    )
+    if skip_pattern:
+        extracted = extracted.mask(text.str.contains(skip_pattern, case=False, na=False))
+    return extracted
+
+
+def _extract_age_days(series: pd.Series) -> pd.Series:
+    """Convert simple age strings such as '10 days' or '3-4 weeks' to days."""
+
+    text = series.fillna("").astype(str).str.lower()
+    ranges = text.str.extract(r"(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)")
+    first = pd.to_numeric(ranges[0], errors="coerce")
+    second = pd.to_numeric(ranges[1], errors="coerce")
+    single = pd.to_numeric(
+        text.str.extract(r"(\d+(?:\.\d+)?)", expand=False), errors="coerce"
+    )
+    value = ((first + second) / 2).combine_first(single)
+    value = value.mask(text.str.contains("week", na=False), value * 7)
+    return value
+
+
+def _categorize_problem_notes(value: Any) -> str:
+    """Create lightweight issue categories from greenhouse free text."""
+
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return "No issue recorded"
+
+    text = str(value).strip().lower()
+    if not text or text in UNKNOWN_TOKENS:
+        return "No issue recorded"
+
+    categories: list[str] = []
+    patterns = {
+        "Leak / water loss": r"leak|spill|lost|missing water",
+        "Pump / return issue": r"pump|return",
+        "Power / lighting": r"electric|light|power",
+        "Water stress": r"stress|dry|evaporation|water room",
+        "Crop / plant health": r"weed|harvest|basil|lettuce|pepper|kale|plant",
+        "Manual operation": r"manual|manually|door",
+    }
+    for label, pattern in patterns.items():
+        if re.search(pattern, text):
+            categories.append(label)
+
+    return "; ".join(categories) if categories else "Other issue"
+
+
+def _classify_leak_severity(raw_leak: pd.Series, leak_reported: pd.Series) -> pd.Series:
+    """Classify leak severity from the cleaned boolean and source phrase."""
+
+    text = raw_leak.fillna("").astype(str).str.lower()
+    severity = pd.Series("Unknown", index=raw_leak.index)
+    severity = severity.mask(leak_reported.eq(False), "No Leak")
+    severity = severity.mask(
+        leak_reported.eq(True)
+        & text.str.contains(r"major|alot|a lot|cylinder|lost|spill", na=False),
+        "Major",
+    )
+    severity = severity.mask(leak_reported.eq(True) & severity.eq("Unknown"), "Minor")
+    return severity
+
+
+def _derive_cleaning_output_aliases(frame: pd.DataFrame) -> pd.DataFrame:
+    """Adapt the notebook's cleaned output to the dashboard's analysis schema."""
+
+    if "input_source_sheet" not in frame.columns:
+        return frame
+
+    result = frame.copy()
+    sheet = _clean_text(_optional_series(result, "input_source_sheet"), "Unknown")
+    result["system"] = sheet.replace(SYSTEM_NAME_ALIASES)
+    result["system_type"] = np.where(result["system"].eq("Conventional"), "Soil", "Hydroponic")
+
+    result["observation_date"] = pd.to_datetime(
+        _first_available(result, ["date", "date_raw_source", "observed_at"]),
+        errors="coerce",
+    ).dt.normalize()
+    result["observation_time"] = _clean_text(_optional_series(result, "time"), "")
+    result["observation_timestamp"] = pd.to_datetime(
+        _first_available(result, ["observed_at", "input_observed_at"]),
+        errors="coerce",
+    )
+
+    consumed = pd.to_numeric(
+        _optional_series(result, "how_much_consumed_liters"), errors="coerce"
+    )
+    watered = pd.to_numeric(_optional_series(result, "watered_amount_liters"), errors="coerce")
+    result["water_consumed_l"] = consumed
+    result["watered_amount_l"] = watered
+    result["water_use_l"] = consumed.combine_first(watered)
+    result["water_use_basis"] = np.select(
+        [consumed.notna(), watered.notna()],
+        ["Recorded consumption", "Applied watering"],
+        default="No water quantity",
+    )
+
+    result["water_in_return_l"] = pd.to_numeric(
+        _optional_series(result, "water_in_return_liters"), errors="coerce"
+    )
+    result["return_now_l"] = pd.to_numeric(
+        _optional_series(result, "return_now_liters"), errors="coerce"
+    )
+    result["water_addition_duration_min"] = pd.to_numeric(
+        _optional_series(result, "mins_added_minutes"), errors="coerce"
+    )
+    result["ph_down_ml"] = pd.to_numeric(
+        _optional_series(result, "ph_down_milliliters"), errors="coerce"
+    )
+
+    raw_plant_count = _first_available(
+        result, ["how_many_plants_planted", "how_many_planted"], default=""
+    )
+    result["plant_count"] = _extract_first_quantity(
+        raw_plant_count, skip_pattern=r"all except|empty|tower|unit"
+    )
+    result["age_days"] = _extract_age_days(_optional_series(result, "age", ""))
+    result["age_days_imputed"] = False
+
+    result["plant_name"] = _clean_text(_optional_series(result, "plant"), "Unknown")
+    result["growth_stage"] = _clean_text(
+        _optional_series(result, "seed_or_seedling"), "Unknown"
+    )
+    result["crop_types"] = result["plant_name"]
+    result["leak_locations"] = _clean_text(
+        _optional_series(result, "leak_or_no"), "Unknown"
+    )
+
+    problem_text = _first_available(
+        result, ["problem_notes", "problems", "problems_faced"], default=""
+    )
+    result["problem_notes"] = _clean_text(problem_text, "No issue recorded")
+    result["problem_categories"] = result["problem_notes"].apply(_categorize_problem_notes)
+    problem_present = _has_text(problem_text)
+
+    review_flag = _normalize_boolean(_optional_series(result, "needs_review", False))
+    result["needs_review"] = review_flag
+    review_reasons = _clean_text(_optional_series(result, "review_reasons"), "")
+    outlier_columns = [column for column in result.columns if column.endswith("_possible_outlier")]
+    outlier_flag = (
+        result[outlier_columns].apply(_normalize_boolean).any(axis=1)
+        if outlier_columns
+        else pd.Series(False, index=result.index)
+    )
+
+    weekend_text = (
+        _clean_text(_optional_series(result, "how_much_consumed"), "")
+        + " "
+        + _clean_text(_optional_series(result, "watered_amount"), "")
+        + " "
+        + review_reasons
+    ).str.lower()
+    result["weekend_or_aggregate_flag"] = weekend_text.str.contains(
+        r"weekend|\b\d+\s*days?\b|aggregate", na=False
+    )
+    result["estimated_value_flag"] = review_reasons.str.contains(
+        r"context|uncertainty|ambiguous|requires_review", case=False, na=False
+    )
+    result["core_measurement_missing"] = result["observation_date"].isna() | result["water_use_l"].isna()
+    result["sanity_warning_flag"] = review_flag | outlier_flag
+    result["analysis_ready_water_use_flag"] = (
+        result["water_use_l"].notna()
+        & ~review_flag
+        & ~outlier_flag
+        & result["observation_date"].notna()
+    )
+
+    result["manual_water_addition"] = (
+        _clean_text(_optional_series(result, "mins_added"), "")
+        .str.contains("manual", case=False, na=False)
+        | _clean_text(_optional_series(result, "mins_added_parse_status"), "")
+        .str.contains("manual", case=False, na=False)
+    )
+    result["ph_adjustment_flag"] = result["ph_down_ml"].notna() | _has_text(
+        _optional_series(result, "ph_down")
+    )
+    result["nutrient_addition_flag"] = _has_text(
+        _optional_series(result, "nutrient_solution")
+    )
+    result["issue_flag"] = problem_present
+    result["manual_intervention_flag"] = (
+        result["manual_water_addition"]
+        | result["ph_adjustment_flag"]
+        | result["nutrient_addition_flag"]
+        | result["issue_flag"]
+    )
+
+    leak_source = _optional_series(result, "leak_reported")
+    leak_text = leak_source.fillna("").astype(str).str.strip().str.lower()
+    leak_yes = leak_source.eq(True) | leak_text.isin(["true", "yes", "y", "1"])
+    leak_no = leak_source.eq(False) | leak_text.isin(["false", "no", "n", "0"])
+    leak_bool = pd.Series(np.nan, index=result.index, dtype="object")
+    leak_bool = leak_bool.mask(leak_yes, True).mask(leak_no, False)
+    result["leak_flag"] = np.select(
+        [leak_bool.eq(True), leak_bool.eq(False)],
+        ["Yes", "No"],
+        default="Unknown",
+    )
+    result["leak_severity"] = _classify_leak_severity(
+        _optional_series(result, "leak_or_no"), leak_bool
+    )
+
+    result["nutrient_total_ml"] = np.nan
+    result["harvest_related_flag"] = problem_text.fillna("").astype(str).str.contains(
+        "harvest", case=False, na=False
+    )
+    result["end_of_cycle_flag"] = problem_text.fillna("").astype(str).str.contains(
+        "end of cycle", case=False, na=False
+    )
+    result["drop_irrelevant_sparse_row"] = False
+
+    status = pd.Series("Usable", index=result.index)
+    status = status.mask(result["weekend_or_aggregate_flag"], "Aggregate")
+    status = status.mask(result["estimated_value_flag"], "Estimated")
+    status = status.mask(result["core_measurement_missing"], "Event Only")
+    status = status.mask(review_flag, "Review Required")
+    result["data_quality_status"] = status
+
+    if "dataset_row_id" not in result.columns:
+        result["dataset_row_id"] = np.arange(1, len(result) + 1)
+
+    return result
 
 
 def split_tokens(value: Any, preserve_unknown: bool = False) -> list[str]:
@@ -192,6 +563,9 @@ def ensure_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
     frame = df.copy()
 
     text_defaults = {
+        "system": "Unknown",
+        "system_type": "Unknown",
+        "water_use_basis": "Unknown",
         "leak_flag": "Unknown",
         "leak_severity": "Unknown",
         "plant_name": "Unknown",
@@ -207,6 +581,7 @@ def ensure_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     boolean_defaults = {
         "manual_water_addition": False,
+        "ph_adjustment_flag": False,
         "issue_flag": False,
         "nutrient_addition_flag": False,
         "manual_intervention_flag": False,
@@ -216,6 +591,9 @@ def ensure_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
         "analysis_ready_water_use_flag": False,
         "sanity_warning_flag": False,
         "age_days_imputed": False,
+        "harvest_related_flag": False,
+        "end_of_cycle_flag": False,
+        "drop_irrelevant_sparse_row": False,
     }
     for column, default in boolean_defaults.items():
         if column not in frame.columns:
@@ -224,6 +602,8 @@ def ensure_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     numeric_defaults = {
         "water_use_l": np.nan,
+        "water_in_return_l": np.nan,
+        "return_now_l": np.nan,
         "water_addition_duration_min": np.nan,
         "plant_count": np.nan,
         "nutrient_total_ml": np.nan,
@@ -326,7 +706,7 @@ def ensure_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
 def preprocess_dataset(df: pd.DataFrame) -> pd.DataFrame:
     """Standardize types and create analysis-ready derived fields."""
 
-    frame = df.copy()
+    frame = _derive_cleaning_output_aliases(df)
 
     for column in NUMERIC_COLUMNS:
         if column in frame.columns:
@@ -346,11 +726,17 @@ def preprocess_dataset(df: pd.DataFrame) -> pd.DataFrame:
                 .replace({"": "Unknown"})
             )
 
+    if "observation_date" not in frame.columns:
+        frame["observation_date"] = pd.NaT
     frame["observation_date"] = pd.to_datetime(
         frame["observation_date"], errors="coerce"
     ).dt.normalize()
 
+    if "observation_timestamp" not in frame.columns:
+        frame["observation_timestamp"] = pd.NaT
     timestamp = pd.to_datetime(frame["observation_timestamp"], errors="coerce")
+    if "observation_time" not in frame.columns:
+        frame["observation_time"] = ""
     combined = pd.to_datetime(
         frame["observation_date"].dt.strftime("%Y-%m-%d").fillna("")
         + " "
@@ -410,13 +796,17 @@ def available_filter_options(df: pd.DataFrame) -> dict[str, list[Any]]:
 
 def default_filters(df: pd.DataFrame) -> dict[str, Any]:
     options = available_filter_options(df)
+    valid_dates = df["observation_date"].dropna()
+    if valid_dates.empty:
+        today = pd.Timestamp.today().date()
+        date_range = (today, today)
+    else:
+        date_range = (valid_dates.min().date(), valid_dates.max().date())
+
     return {
         "systems": options["systems"],
         "system_types": options["system_types"],
-        "date_range": (
-            df["observation_date"].min().date(),
-            df["observation_date"].max().date(),
-        ),
+        "date_range": date_range,
         "crop_types": [],
         "plant_names": [],
         "quality_status": options["quality_status"],
@@ -442,12 +832,13 @@ def filter_dataset(df: pd.DataFrame, filters: dict[str, Any]) -> pd.DataFrame:
     if filters.get("system_types"):
         filtered = filtered[filtered["system_type"].isin(filters["system_types"])]
 
-    start_date, end_date = filters["date_range"]
-    start_ts = pd.to_datetime(start_date)
-    end_ts = pd.to_datetime(end_date)
-    filtered = filtered[
-        filtered["observation_date"].between(start_ts, end_ts, inclusive="both")
-    ]
+    if filtered["observation_date"].notna().any():
+        start_date, end_date = filters["date_range"]
+        start_ts = pd.to_datetime(start_date)
+        end_ts = pd.to_datetime(end_date)
+        filtered = filtered[
+            filtered["observation_date"].between(start_ts, end_ts, inclusive="both")
+        ]
 
     if filters.get("crop_types"):
         filtered = filtered[

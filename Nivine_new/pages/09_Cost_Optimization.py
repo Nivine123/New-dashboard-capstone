@@ -5,39 +5,26 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from utils.ui import build_page_context, render_hero
+
 
 # -----------------------------
-# Page setup
+# Page setup and data
 # -----------------------------
-st.set_page_config(page_title="Cost Optimization", layout="wide")
+context = build_page_context("Cost Optimization")
+df = context["df"]
 
-st.title("Cost Optimization & Resource Burden")
-st.markdown(
-    """
-This page estimates **cost burden** using operational proxies because full accounting cost data is not available.
-The goal is to identify which systems create the highest cost pressure and why.
-"""
+render_hero(
+    "Cost Optimization & Resource Burden",
+    (
+        "Estimate relative cost pressure using operational proxies for water use, nutrient tracking, manual workload, leaks, "
+        "and issue events. These are sensitivity assumptions, not accounting records."
+    ),
 )
 
-
-# -----------------------------
-# Load data
-# -----------------------------
-from pathlib import Path
-
-@st.cache_data(show_spinner=False)
-def load_cost_data() -> pd.DataFrame:
-    base_path = Path(__file__).resolve().parent.parent
-    data_path = base_path / "greenhouse_systems_cleaned.csv"
-
-    if not data_path.exists():
-        st.error(f"Data file not found: {data_path}")
-        st.stop()
-
-    return pd.read_csv(data_path)
-
-
-df = load_cost_data()
+if df.empty:
+    st.warning("No rows remain after the current filters. Expand the sidebar filters to continue.")
+    st.stop()
 
 
 # -----------------------------

@@ -1,0 +1,14 @@
+check,severity,passed,details
+raw_source_hash_unchanged,pass,True,raw CSV hash is unchanged
+cleaned_dataset_non_empty,pass,True,276 cleaned rows
+column_names_unique,pass,True,98 unique columns
+column_names_snake_case,pass,True,all output columns are snake_case
+row_count_matches_exact_deduplication,pass,True,"expected 276, found 276"
+post_cleaning_duplicate_review,pass,True,no exact duplicate rows remain on original columns
+provenance_fields_present,pass,True,"source_file, source_row_number, and raw_record_id are present"
+quantity_parser_preserves_negative_sign,pass,True,-1 L parses as -1.0 liters
+leak_parser_handles_negative_phrases,pass,True,negative leak phrases parse as False
+numeric_parser_handles_decimal_comma,pass,True,"3,5 parses as 3.5"
+review_rows_are_flagged_not_failed,warning,False,86 rows require human review
+possible_normalized_duplicates_review_only,pass,True,no possible normalized duplicates flagged
+risky_parse_statuses_are_review_flagged,pass,True,all risky parse statuses are review-flagged

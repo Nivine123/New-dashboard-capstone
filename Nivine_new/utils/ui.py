@@ -512,7 +512,15 @@ def render_sidebar(df, dataset_path) -> dict[str, Any]:
 
 def build_page_context(page_title: str) -> dict[str, Any]:
     configure_page(page_title)
-    df, dataset_path = load_greenhouse_dataset()
+    try:
+        df, dataset_path = load_greenhouse_dataset()
+    except FileNotFoundError as exc:
+        st.error(str(exc))
+        st.stop()
+    except Exception as exc:
+        st.error(f"Could not load the cleaned dataset: {type(exc).__name__}: {exc}")
+        st.stop()
+
     filters = render_sidebar(df, dataset_path)
     filtered_df = filter_dataset(df, filters)
     comparability_note = build_comparability_note(filtered_df)
