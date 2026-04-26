@@ -236,20 +236,20 @@ with diagram_left:
             dictionary_rows=len(dictionary),
             has_metadata=bool(metadata),
         ),
-        use_container_width=True,
+        width="stretch",
     )
     render_chart_conclusion(
         "How the cleaning notebook outputs feed the deployed Streamlit app.",
         "The dashboard is deployment-ready because the primary cleaned data and optional report artifacts are available inside the project.",
     )
 with diagram_right:
-    st.plotly_chart(review_readiness_funnel(prepared_df), use_container_width=True)
+    st.plotly_chart(review_readiness_funnel(prepared_df), width="stretch")
     render_chart_conclusion(
         "How many rows remain after water-readiness, warning, and review checks.",
         "Rows needing review are not discarded; they are surfaced so decisions can distinguish usable evidence from records requiring human confirmation.",
     )
 
-st.plotly_chart(feature_availability_heatmap(prepared_df), use_container_width=True)
+st.plotly_chart(feature_availability_heatmap(prepared_df), width="stretch")
 render_chart_conclusion(
     "The share of rows with key analytical fields populated for each system.",
     "Field coverage explains why some comparisons are strong while others must stay directional.",
@@ -279,15 +279,15 @@ with validation_left:
             color_discrete_map={True: "#2A9D8F", False: "#E76F51", "True": "#2A9D8F", "False": "#E76F51"},
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         render_chart_conclusion(
             "Validation checks grouped by severity and pass/fail status.",
             "The app can separate checks that passed from warnings or failures before promoting any analytical conclusion.",
         )
-        st.dataframe(validation, use_container_width=True, hide_index=True)
+        st.dataframe(validation, width="stretch", hide_index=True)
     else:
         st.warning("Validation report is present but does not have the expected columns.")
-        st.dataframe(validation, use_container_width=True, hide_index=True)
+        st.dataframe(validation, width="stretch", hide_index=True)
 
 with validation_right:
     st.markdown("#### Quality summary")
@@ -311,7 +311,7 @@ with validation_right:
             color_discrete_map={"info": "#2A9D8F", "warning": "#E9C46A", "fail": "#E76F51"},
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)", showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         render_chart_conclusion(
             "Quality findings grouped by severity.",
             "Warning-heavy areas should guide review priorities, while info-level findings provide context without blocking analysis.",
@@ -319,10 +319,10 @@ with validation_right:
 
         warning_rows = quality_view[quality_view["severity"].astype(str).str.lower().eq("warning")]
         warning_rows = warning_rows.sort_values("count_numeric", ascending=False, na_position="last")
-        st.dataframe(warning_rows.head(20), use_container_width=True, hide_index=True)
+        st.dataframe(warning_rows.head(20), width="stretch", hide_index=True)
     else:
         st.warning("Data quality summary is present but does not have the expected columns.")
-        st.dataframe(quality, use_container_width=True, hide_index=True)
+        st.dataframe(quality, width="stretch", hide_index=True)
 
 
 st.markdown("### Review queue")
@@ -362,7 +362,7 @@ else:
         display_columns = queue.columns[: min(12, len(queue.columns))].tolist()
 
     st.caption(f"{len(queue):,} review rows shown.")
-    st.dataframe(queue[display_columns], use_container_width=True, hide_index=True)
+    st.dataframe(queue[display_columns], width="stretch", hide_index=True)
     _download_button("Download filtered review queue", queue, "filtered_review_queue.csv")
 
 
@@ -413,7 +413,7 @@ if not selected_columns:
     selected_columns = default_explorer_columns
 
 st.caption(f"{len(explorer):,} cleaned rows shown.")
-st.dataframe(explorer[selected_columns], use_container_width=True, hide_index=True)
+st.dataframe(explorer[selected_columns], width="stretch", hide_index=True)
 d1, d2 = st.columns(2, gap="medium")
 with d1:
     _download_button("Download filtered cleaned data", explorer, "filtered_cleaned_data.csv")
@@ -450,7 +450,7 @@ with domain_left:
             title="Water use over time",
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         render_chart_conclusion(
             "Water-use movement over time by system and water-use basis.",
             "Spikes and drops should be interpreted together with the quality and review flags because some rows represent estimates or aggregate periods.",
@@ -472,7 +472,7 @@ with domain_right:
             title="pH-down activity over time",
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         render_chart_conclusion(
             "Daily pH-down additions by system.",
             "pH activity highlights intervention intensity and helps identify periods where chemistry adjustments were concentrated.",
@@ -497,7 +497,7 @@ with domain_bottom_left:
             title="Leak reporting by system",
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         render_chart_conclusion(
             "Leak-status reporting counts across systems.",
             "A system with fewer reported leaks is only reassuring when leak-status coverage is also strong.",
@@ -516,7 +516,7 @@ with domain_bottom_right:
             title="Water-addition duration distribution",
         )
         fig.update_layout(template="plotly_white", paper_bgcolor="rgba(0,0,0,0)", showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         render_chart_conclusion(
             "Distribution of recorded water-addition duration by system.",
             "Wide duration ranges point to variable operating workload or inconsistent recording that deserves follow-up.",
@@ -551,7 +551,7 @@ else:
             dictionary_view["missing_pct"].fillna(0).le(max_missing)
         ]
 
-    st.dataframe(dictionary_view, use_container_width=True, hide_index=True)
+    st.dataframe(dictionary_view, width="stretch", hide_index=True)
     _download_button("Download filtered data dictionary", dictionary_view, "filtered_data_dictionary.csv")
 
 
@@ -580,7 +580,7 @@ else:
             pd.DataFrame(
                 [{"severity": key, "checks": value} for key, value in validation_meta.items()]
             ),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 

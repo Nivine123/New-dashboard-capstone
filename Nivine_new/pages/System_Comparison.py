@@ -139,7 +139,7 @@ comparison_table = comparison_table.rename(
 
 st.dataframe(
     comparison_table,
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
     column_config={
         "Efficiency score": st.column_config.NumberColumn(
@@ -183,7 +183,7 @@ viz_left, viz_right = st.columns(2, gap="large")
 with viz_left:
     fig1 = score_bar_chart(scorecard)
     fig1.update_layout(title="Multi-Dimensional System Performance Comparison")
-    st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(fig1, width="stretch")
     render_chart_conclusion(
         "The main comparison dimensions for each system on a common 0-100 score scale.",
         "No single bar should decide the winner; the most defensible choice depends on whether efficiency, stability, risk, or confidence matters most.",
@@ -192,7 +192,7 @@ with viz_left:
 with viz_right:
     fig2 = risk_confidence_scatter(scorecard)
     fig2.update_layout(title="Risk vs Confidence: Reliability-Aware System Evaluation")
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, width="stretch")
     render_chart_conclusion(
         "Operational risk plotted against evidence confidence, with observation volume shown by marker size.",
         "High-risk systems with moderate or strong confidence are priority review targets because the evidence is strong enough to act on.",
@@ -200,20 +200,20 @@ with viz_right:
 
 profile_left, profile_right = st.columns(2, gap="large")
 with profile_left:
-    st.plotly_chart(score_radar_chart(scorecard), use_container_width=True)
+    st.plotly_chart(score_radar_chart(scorecard), width="stretch")
     render_chart_conclusion(
         "Each system's shape across efficiency, stability, risk, workload, and confidence.",
         "The radar view makes trade-offs visible: a system can be efficient but still carry workload or risk pressure.",
     )
 with profile_right:
-    st.plotly_chart(system_score_heatmap(scorecard), use_container_width=True)
+    st.plotly_chart(system_score_heatmap(scorecard), width="stretch")
     render_chart_conclusion(
         "A dense score matrix for quickly scanning high and low dimensions by system.",
         "The heatmap is useful for presentation because it turns the scorecard into an immediate strengths-and-risks map.",
     )
     
 st.markdown("### Can we trust this?")
-st.dataframe(trust_matrix, use_container_width=True, hide_index=True)
+st.dataframe(trust_matrix, width="stretch", hide_index=True)
 
 with st.expander("How the scoring works", expanded=False):
     st.markdown(
@@ -266,7 +266,7 @@ with st.expander("How the scoring works", expanded=False):
             "confidence_score": "Confidence score",
         }
     )
-    st.dataframe(component_view, use_container_width=True, hide_index=True)
+    st.dataframe(component_view, width="stretch", hide_index=True)
 
 st.markdown("### Confidence-aware interpretation")
 st.markdown(

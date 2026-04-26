@@ -170,13 +170,13 @@ st.markdown(
 
 chart_left, chart_right = st.columns(2, gap="large")
 with chart_left:
-    st.plotly_chart(score_bar_chart(scorecard), use_container_width=True)
+    st.plotly_chart(score_bar_chart(scorecard), width="stretch")
     render_chart_conclusion(
         "A grouped score comparison across efficiency, risk, stability, workload, and confidence.",
         "The strongest system depends on the dimension, so the dashboard should be read as a balanced decision view rather than a single raw ranking.",
     )
 with chart_right:
-    st.plotly_chart(risk_confidence_scatter(scorecard), use_container_width=True)
+    st.plotly_chart(risk_confidence_scatter(scorecard), width="stretch")
     render_chart_conclusion(
         "Each system's operational risk score plotted against the confidence score, with point size showing observation volume.",
         "Systems in the upper-right require careful interpretation: they have enough evidence to make their risks visible, not necessarily worse operations in every context.",
@@ -184,13 +184,13 @@ with chart_right:
 
 profile_left, profile_right = st.columns(2, gap="large")
 with profile_left:
-    st.plotly_chart(score_radar_chart(scorecard), use_container_width=True)
+    st.plotly_chart(score_radar_chart(scorecard), width="stretch")
     render_chart_conclusion(
         "A radar profile of the main decision dimensions for each greenhouse system.",
         "The most useful operating choice is the system with the best shape for the decision goal, not just the highest score in one metric.",
     )
 with profile_right:
-    st.plotly_chart(system_score_heatmap(scorecard), use_container_width=True)
+    st.plotly_chart(system_score_heatmap(scorecard), width="stretch")
     render_chart_conclusion(
         "A compact heatmap of the same score dimensions by system.",
         "Darker cells quickly identify strengths and pressure points that deserve deeper page-level review.",
@@ -293,7 +293,7 @@ st.write(
 )
 
 st.markdown("### Can we trust this?")
-st.dataframe(trust_matrix, use_container_width=True, hide_index=True)
+st.dataframe(trust_matrix, width="stretch", hide_index=True)
 
 summary_left, summary_right = st.columns(2, gap="large")
 with summary_left:
