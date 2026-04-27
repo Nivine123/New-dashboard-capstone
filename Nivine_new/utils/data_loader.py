@@ -480,7 +480,9 @@ def _derive_cleaning_output_aliases(frame: pd.DataFrame) -> pd.DataFrame:
         _optional_series(result, "leak_or_no"), leak_bool
     )
 
-    result["nutrient_total_ml"] = np.nan
+    result["nutrient_total_ml"] = pd.to_numeric(
+    _optional_series(result, "nutrient_solution_milliliters"), errors="coerce"
+)
     result["harvest_related_flag"] = problem_text.fillna("").astype(str).str.contains(
         "harvest", case=False, na=False
     )
