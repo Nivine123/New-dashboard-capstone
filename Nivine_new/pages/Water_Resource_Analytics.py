@@ -171,28 +171,15 @@ render_chart_conclusion(
 
 resource_left, resource_right = st.columns(2, gap="large")
 with resource_left:
-    nutrient_daily = daily[
-        daily["daily_nutrient_ml"].notna() & (daily["daily_nutrient_ml"] > 0)
-    ].copy()
-
-    if nutrient_daily.empty:
-        st.info("No nutrient additions are available in the current filter scope.")
-    else:
-        nutrient_fig = resource_activity_chart(
-            nutrient_daily,
+    st.plotly_chart(
+        resource_activity_chart(
+            daily,
             metric="daily_nutrient_ml",
             title="Nutrient additions over time",
             y_title="Total nutrient added (mL)",
-        )
-
-        nutrient_fig.update_traces(mode="lines+markers")
-        nutrient_fig.update_layout(
-            yaxis=dict(rangemode="tozero"),
-            xaxis_title="Date",
-            yaxis_title="Total nutrient added (mL)",
-        )
-
-        st.plotly_chart(nutrient_fig, use_container_width=True)
+        ),
+        width="stretch",
+    )
     render_chart_conclusion(
         "Daily nutrient addition quantities by system.",
         "Concentrated nutrient periods can explain cost, workload, and efficiency differences when quantity tracking is complete.",
