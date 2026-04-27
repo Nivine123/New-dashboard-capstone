@@ -171,14 +171,17 @@ render_chart_conclusion(
 
 resource_left, resource_right = st.columns(2, gap="large")
 with resource_left:
+    nutrient_fig = resource_activity_chart(
+        daily,
+        metric="daily_nutrient_ml",
+        title="Nutrient additions over time",
+        y_title="Total nutrient added (mL)",
+    )
+
     st.plotly_chart(
-        resource_activity_chart(
-            daily,
-            metric="daily_nutrient_ml",
-            title="Nutrient additions over time",
-            y_title="Total nutrient added (mL)",
-        ),
-        width="stretch",
+        nutrient_fig,
+        use_container_width=True,
+        config={"scrollZoom": False}
     )
     render_chart_conclusion(
         "Daily nutrient addition quantities by system.",
