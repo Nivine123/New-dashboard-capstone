@@ -82,10 +82,13 @@ st.markdown("### Plant count and crop mix")
 plant_left, plant_right = st.columns(2, gap="large")
 with plant_left:
     plant_count_view = (
-        df.groupby("system", as_index=False)["plant_count"]
-        .mean()
-        .rename(columns={"plant_count": "average_plant_count"})
+    df[df["plant_count"].notna()]
+    .groupby("system", as_index=False)
+    .agg(
+        average_plant_count=("plant_count", "mean"),
+        plant_count_records=("plant_count", "count"),
     )
+)
     plant_fig = px.bar(
         plant_count_view,
         x="system",
