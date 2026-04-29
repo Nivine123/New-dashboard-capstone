@@ -21,119 +21,109 @@ from utils.ui import (
     render_metric_card,
 )
 
-# --------------------------------------------------
+# ==================================================
+# Constants (REAL-WORLD MODEL)
+# ==================================================
+PLANTS_PER_TOWER = 42
+TOWERS_PER_GROUP = 6           # L1, L2, R1, R2 each
+TOWER_GROUPS = ["L1", "L2", "R1", "R2"]
+
+# ==================================================
 # Page context
-# --------------------------------------------------
+# ==================================================
 context = build_page_context("Crop / Plant Insights")
 df = context["df"]
 
 render_hero(
     "Crop / Plant Insights",
     (
-        "Explore plant count, crop diversity, growth stages, age distributions, "
-        "and crop-system combinations. Interpret associations cautiously."
+        "Explore tower utilization, estimated plant counts, crop diversity, growth stages, "
+        "age distributions, and crop-system associations. "
+        "Plant counts are derived from tower counts (42 plants per tower)."
     ),
 )
 
 if df.empty:
-    st.warning(
-        "No rows remain after the current filters. Expand the sidebar filters to continue."
-    )
+    st.warning("No rows remain after the current filters.")
     st.stop()
 
 render_comparability_note(context["comparability_note"])
 
-# --------------------------------------------------
-# Detect tower column safely
-# --------------------------------------------------
-TOWER_CANDIDATES = [
-    "tower",
-    "tower_id",
-    "tower_label",
-    "tower_name",
-    "unit",
-    "module",
-]
+# ==================================================
+# Build tower identifiers (L1/L2/R1/R2 + tower index)
+# ==================================================
+if {"tower_group", "tower_index"}.issubset(df.columns):
+    df["tower_id"] = (
+        df["tower_group"].astype(str).str.strip()
+        + "-"
+        + df["tower_index"].astype(str).str.strip()
+    )
+else:
+    df["tower_id"] = None
 
-tower_col = None
-for candidate in TOWER_CANDIDATES:
-    if candidate in df.columns:
-        tower_col = candidate
-        break
+# ==================================================
+# Derive estimated plant counts
+# Excel value = towers planted
+# ==================================================
+df["towers_planted"] = df["plant_count"]
+df["plants_estimated"] = df["towers_planted"] * PLANTS_PER_TOWER
 
-# --------------------------------------------------
-# Precomputed summaries
-# --------------------------------------------------
+# ==================================================
+# Summaries
+# ==================================================
 summary = compute_system_summary(df)
 crop_counts = compute_crop_counts(df)
 
-# --------------------------------------------------
-# KPI cards
-# --------------------------------------------------
+# ==================================================
+# KPI Cards
+# ==================================================
 cards = [
     (
-        "Average recorded plant count",
-        format_num(df["plant_count"].mean()),
-        "Average plant count where the field is populated.",
+        "Avg towers planted",
+        format_num(df["towers_planted"].mean()),
+        "Average number of towers planted per observation.",
     ),
     (
-        "Distinct crop combinations",
+        "Avg estimated plants",
+        format_num(df["plants_estimated"].mean()),
+        "Estimated plants (42 plants per tower).",
+    ),
+    (
+        "Distinct crop tokens",
         str(crop_counts["crop_type"].nunique() if not crop_counts.empty else 0),
-        "Unique crop tokens after splitting mixed fields.",
-    ),
-    (
-        "Known plant-name share",
-        format_pct(df["plant_name_known_flag"].mean()),
-        "Rows with an explicit plant name.",
+        "Unique crop labels observed.",
     ),
     (
         "Known growth-stage share",
         format_pct(df["growth_stage_known_flag"].mean()),
-        "Rows with usable growth-stage data.",
+        "Rows with usable growth-stage metadata.",
     ),
 ]
 
-card_cols = st.columns(4, gap="medium")
-for col, card in zip(card_cols, cards):
+cols = st.columns(4, gap="medium")
+for col, card in zip(cols, cards):
     with col:
         render_metric_card(*card)
 
-# --------------------------------------------------
-# Metadata coverage warning
-# --------------------------------------------------
-metadata_gap_systems = summary.loc[
-    summary[["crop_known_share", "plant_known_share", "growth_known_share"]]
-        .fillna(0)
-        .mean(axis=1) < 0.35,
-    "system",
-].astype(str).tolist()
-
-if metadata_gap_systems:
-    st.info(
-        "Plant-level metadata is limited for "
-        + ", ".join(metadata_gap_systems)
-        + ". Interpret crop insights cautiously."
-    )
-
-# --------------------------------------------------
-# Plant count and crop mix
-# --------------------------------------------------
-st.markdown("### Plant count and crop mix")
+# ==================================================
+# Plant count (TOWERS) + Crop mix
+# ==================================================
+st.markdown("### Tower utilization and crop mix")
 
 left, right = st.columns(2, gap="large")
 
 with left:
-    plant_count_view = (
-        df.groupby("system", as_index=False)["plant_count"]
+    tower_view = (
+        df.groupby("system", as_index=False)["towers_planted"]
         .mean()
-        .rename(columns={"plant_count": "average_plant_count"})
+        .rename(columns={"towers_planted": "avg_towers_planted"})
     )
 
     fig = px.bar(
-        plant_count_view,
+        tower_view,
         x="system",
-        y="average_plant_count",
-        title="Average plant count by system",
+        y="avg_towers_planted",
+        title="Average towers planted by system",
         color="system",
     )
 
@@ -141,8 +131,8 @@ with left:
     st.plotly_chart(fig, use_container_width=True)
 
     render_chart_conclusion(
-        "Average recorded plant count by system.",
-        "Plant counts provide scale context only."
+        "Average towers planted by system.",
+        "Values represent tower utilization, not number of plants.",
     )
 
 with right:
@@ -151,9 +141,9 @@ with right:
     else:
         st.plotly_chart(crop_heatmap(crop_counts), use_container_width=True)
 
-# --------------------------------------------------
+# ==================================================
 # Growth stage and age
-# --------------------------------------------------
+# ==================================================
 stage_left, stage_right = st.columns(2, gap="large")
 
 with stage_left:
@@ -167,18 +157,17 @@ with stage_left:
     if stage_df.empty:
         st.info("Growth-stage data is too sparse.")
     else:
-        stage_fig = px.bar(
+        fig = px.bar(
             stage_df,
             x="system",
             y="count",
             color="growth_stage",
             title="Growth-stage distribution",
         )
-        st.plotly_chart(stage_fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
 with stage_right:
     age_df = df[df["age_days"].notna()]
-
     if age_df.empty:
         st.info("Age data is not available.")
     else:
@@ -193,72 +182,62 @@ with stage_right:
             use_container_width=True,
         )
 
-# --------------------------------------------------
-# Planting behavior over time (tower-aware)
-# --------------------------------------------------
-st.markdown("### Planting behavior over time")
+# ==================================================
+# ✅ PLANTING BEHAVIOR OVER TIME — TOWER LEVEL
+# ==================================================
+st.markdown("### Planting behavior over time (tower level)")
 
-if tower_col is None:
-    planting_df = (
-        df[df["plant_count"].notna()]
-        .groupby(["system", "observation_date"], as_index=False)["plant_count"]
-        .mean()
-        .rename(columns={"plant_count": "average_plant_count"})
+if df["tower_id"].isna().all():
+    st.warning(
+        "Tower identifiers are not available, so trends are shown at the system level."
     )
 
-    if planting_df.empty:
-        st.info("Insufficient plant-count data for time trend.")
-    else:
-        fig = px.line(
-            planting_df,
-            x="observation_date",
-            y="average_plant_count",
-            color="system",
-            markers=True,
-            title="Plant-count trend by system",
-        )
-        st.plotly_chart(fig, use_container_width=True)
+    trend_df = (
+        df.groupby(["system", "observation_date"], as_index=False)["towers_planted"]
+        .mean()
+    )
 
-        render_chart_conclusion(
-            "Plant-count trend by system.",
-            "Tower-level detail is not available in this dataset."
-        )
+    fig = px.line(
+        trend_df,
+        x="observation_date",
+        y="towers_planted",
+        color="system",
+        markers=True,
+        title="Towers planted over time (system average)",
+    )
 
 else:
-    planting_df = (
-        df[df["plant_count"].notna()]
-        .groupby(
-            ["system", tower_col, "observation_date"],
+    trend_df = (
+        df.groupby(
+            ["system", "tower_id", "observation_date"],
             as_index=False,
-        )["plant_count"]
+        )["towers_planted"]
         .mean()
-        .rename(columns={"plant_count": "average_plant_count"})
     )
 
-    if planting_df.empty:
-        st.info("Insufficient plant-count data for time trend.")
-    else:
-        fig = px.line(
-            planting_df,
-            x="observation_date",
-            y="average_plant_count",
-            color="system",
-            line_group=tower_col,
-            hover_data=[tower_col],
-            title="Plant-count trend by tower and system",
-        )
+    fig = px.line(
+        trend_df,
+        x="observation_date",
+        y="towers_planted",
+        color="system",
+        line_group="tower_id",
+        hover_data=["tower_id"],
+        title="Towers planted over time (L1/L2/R1/R2 × 6 towers)",
+    )
 
-        fig.update_traces(opacity=0.35)
-        st.plotly_chart(fig, use_container_width=True)
+    fig.update_traces(opacity=0.35)
 
-        render_chart_conclusion(
-            "Plant-count trend by tower and system.",
-            "Each line represents one tower."
-        )
+st.plotly_chart(fig, use_container_width=True)
 
-# --------------------------------------------------
+render_chart_conclusion(
+    "Tower planting behavior over time.",
+    "Each line represents a physical tower. "
+    "Plant totals are derived as towers planted × 42 plants.",
+)
+
+# ==================================================
 # Crop-system associations
-# --------------------------------------------------
+# ==================================================
 st.markdown("### Crop-system associations")
 
 rows = []
@@ -276,22 +255,23 @@ for (system, crop), group in exploded.groupby(["system", "crop_tokens"]):
             "System": system,
             "Crop": crop,
             "Observations": len(group),
-            "Issue incidence": group["issue_incident_flag"].mean(),
-            "Median water use (L)": group["water_use_l"].median(),
+            "Median towers planted": group["towers_planted"].median(),
+            "Median estimated plants": group["plants_estimated"].median(),
         }
     )
 
 assoc_df = pd.DataFrame(rows)
 
 if assoc_df.empty:
-    st.info("No crop-system combinations meet the evidence threshold.")
+    st.info("No crop-system combinations meet the minimum evidence threshold.")
 else:
     st.dataframe(assoc_df, use_container_width=True, hide_index=True)
 
 with st.expander("Interpretation caution"):
     st.markdown(
         """
-        - Patterns shown are associations, not causal relationships.
-        - Plant-count and crop metadata coverage varies by system and tower.
+        - The dataset records **number of towers planted**, not plant counts.
+        - Estimated plants are derived assuming **42 plants per tower**.
+        - Results represent operational capacity and rollout, not yield.
         """
     )
