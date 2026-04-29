@@ -93,6 +93,7 @@ with plant_left:
         plant_count_view,
         x="system",
         y="average_plant_count",
+        text="plant_count_records",
         title="Average plant count by system",
         color="system",
     )
