@@ -22,14 +22,13 @@ from utils.ui import (
 )
 
 # ==================================================
-# Constants based on REAL greenhouse setup
+# CONSTANTS (REAL SETUP)
 # ==================================================
 PLANTS_PER_TOWER = 42
-TOWERS_PER_GROUP = 6
-TOWER_GROUPS = ["L1", "L2", "R1", "R2"]
+TOWER_GROUP_LABELS = ["L1", "L2", "R1", "R2"]
 
 # ==================================================
-# Page context
+# PAGE CONTEXT
 # ==================================================
 context = build_page_context("Crop / Plant Insights")
 df = context["df"]
@@ -38,8 +37,8 @@ render_hero(
     "Crop / Plant Insights",
     (
         "This page analyzes tower utilization and estimated plant capacity. "
-        "The dataset records the NUMBER OF TOWERS planted (not individual plants). "
-        "Each tower holds 42 plants."
+        "The dataset records the number of TOWERS planted (not individual plants). "
+        "Each tower is assumed to hold 42 plants."
     ),
 )
 
@@ -49,36 +48,62 @@ if df.empty:
 
 render_comparability_note(context["comparability_note"])
 
+df = df.copy()
+
 # ==================================================
-# REQUIRED: tower group column check
+# ✅ DETECT / DERIVE TOWER GROUP (L1 / L2 / R1 / R2)
 # ==================================================
-if "tower_group" not in df.columns:
+tower_group_col = None
+
+# (A) Look for an existing column that already contains L1/L2/R1/R2
+for col in df.columns:
+    unique_vals = df[col].astype(str).str.upper().unique()
+    if any(val in unique_vals for val in TOWER_GROUP_LABELS):
+        tower_group_col = col
+        break
+
+# (B) Otherwise extract from system text (e.g. "Towers L1")
+if tower_group_col is None:
+    extracted = (
+        df["system"]
+        .astype(str)
+        .str.upper()
+        .str.extract(r"\b(L1|L2|R1|R2)\b")
+    )
+    if extracted.notna().any().bool():
+        df["tower_group"] = extracted[0]
+        tower_group_col = "tower_group"
+
+# (C) Final safety check
+if tower_group_col is None:
     st.error(
-        "Expected column 'tower_group' (L1, L2, R1, R2) was not found in the dataset."
+        "Could not find tower groups (L1, L2, R1, R2) in the dataset.\n\n"
+        "Please ensure they appear either:\n"
+        "- in a dedicated column, or\n"
+        "- inside the system name (e.g. 'Towers L1')."
     )
     st.stop()
 
 # ==================================================
-# Rename for clarity
+# ✅ INTERPRET PLANT_COUNT CORRECTLY
 # ==================================================
-df = df.copy()
 df["towers_planted"] = df["plant_count"]
 df["plants_estimated"] = df["towers_planted"] * PLANTS_PER_TOWER
 
 # ==================================================
-# Summaries
+# SUMMARY VIEWS
 # ==================================================
 summary = compute_system_summary(df)
 crop_counts = compute_crop_counts(df)
 
 # ==================================================
-# KPI Cards
+# KPI CARDS
 # ==================================================
 cards = [
     (
         "Avg towers planted",
         format_num(df["towers_planted"].mean()),
-        "Average number of towers planted per observation.",
+        "Average number of towers planted per record.",
     ),
     (
         "Avg estimated plants",
@@ -86,9 +111,9 @@ cards = [
         "Estimated plants (42 plants per tower).",
     ),
     (
-        "Maximum capacity",
-        f"{TOWERS_PER_GROUP * len(TOWER_GROUPS)} towers",
-        "24 towers total across all groups.",
+        "Max capacity (Towers)",
+        "24 towers",
+        "4 groups × 6 towers per group.",
     ),
     (
         "Known growth-stage share",
@@ -103,7 +128,7 @@ for col, card in zip(cols, cards):
         render_metric_card(*card)
 
 # ==================================================
-# Tower utilization by system
+# TOWER UTILIZATION BY SYSTEM
 # ==================================================
 st.markdown("### Tower utilization by system")
 
@@ -126,17 +151,17 @@ st.plotly_chart(fig, use_container_width=True)
 
 render_chart_conclusion(
     "Average number of towers planted.",
-    "Values reflect tower utilization, not number of plants.",
+    "These values indicate utilization, not individual plant counts.",
 )
 
 # ==================================================
-# ✅ PLANTING BEHAVIOR OVER TIME (CORRECT LEVEL)
+# ✅ PLANTING BEHAVIOR OVER TIME (THIS WILL APPEAR)
 # ==================================================
-st.markdown("### Planting behavior over time (L1 / L2 / R1 / R2)")
+st.markdown("### Planting behavior over time (by tower group)")
 
 trend_df = (
     df.groupby(
-        ["system", "tower_group", "observation_date"],
+        ["system", tower_group_col, "observation_date"],
         as_index=False,
     )["towers_planted"]
     .mean()
@@ -146,13 +171,12 @@ fig = px.line(
     trend_df,
     x="observation_date",
     y="towers_planted",
-    color="tower_group",
-    line_dash="system",
+    color=tower_group_col,
     markers=True,
-    title="Towers planted over time by group (6 towers per group)",
+    title="Towers planted over time (L1 / L2 / R1 / R2)",
     labels={
         "towers_planted": "Towers planted",
-        "tower_group": "Tower group",
+        tower_group_col: "Tower group",
         "observation_date": "Date",
     },
 )
@@ -160,13 +184,13 @@ fig = px.line(
 st.plotly_chart(fig, use_container_width=True)
 
 render_chart_conclusion(
-    "Tower rollout by group.",
-    "Each line represents a group of six towers (L1, L2, R1, R2). "
-    "Individual tower-level data is not recorded in the dataset.",
+    "Tower rollout over time by group.",
+    "Each line represents one group of six towers (L1, L2, R1, R2). "
+    "Individual physical towers are not recorded separately in the dataset.",
 )
 
 # ==================================================
-# Growth stage and age
+# GROWTH STAGE + AGE
 # ==================================================
 stage_left, stage_right = st.columns(2, gap="large")
 
@@ -192,7 +216,6 @@ with stage_left:
 
 with stage_right:
     age_df = df[df["age_days"].notna()]
-
     if age_df.empty:
         st.info("Age data is not available.")
     else:
@@ -208,14 +231,15 @@ with stage_right:
         )
 
 # ==================================================
-# Crop-system associations
+# CROP-SYSTEM ASSOCIATIONS
 # ==================================================
 st.markdown("### Crop-system associations")
 
 rows = []
 exploded = df.explode("crop_tokens")
 exploded = exploded[
-    exploded["crop_tokens"].notna() & exploded["crop_tokens"].ne("")
+    exploded["crop_tokens"].notna()
+    & exploded["crop_tokens"].ne("")
 ]
 
 for (system, crop), group in exploded.groupby(["system", "crop_tokens"]):
@@ -242,7 +266,7 @@ with st.expander("Interpretation caution"):
     st.markdown(
         """
         - The dataset records **number of towers planted**, not individual plants.
-        - Each tower is assumed to hold **42 plants**.
-        - Visualizations reflect **tower rollout and utilization**, not yield.
+        - Estimated plant totals assume **42 plants per tower**.
+        - Visualizations reflect **tower utilization and rollout**, not yield.
         """
     )
