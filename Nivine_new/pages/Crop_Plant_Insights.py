@@ -1,70 +1,71 @@
-# =========================================================
-# Plant Scale & Crop Context
-# =========================================================
+from __future__ import annotations
 
-st.markdown("## 🌱 Plant Scale & Crop Context")
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+
+# ---------------------------------------------------------
+# Header
+# ---------------------------------------------------------
+st.markdown("## Plant Scale and Crop Context")
 
 st.markdown(
-    """
-This section describes **what is planted** and **at what scale**.
-Plant count metrics are descriptive and reflect how each system records planting activity.
-"""
+    "This section summarizes crop presence, average recorded plant counts "
+    "across systems, and tower planting activity for the Towers system only."
 )
 
 # ---------------------------------------------------------
-# Prepare columns safely
+# Ensure required columns exist
+# ---------------------------------------------------------
+required_cols = {"system", "plant_count", "observation_date"}
+missing = required_cols - set(df.columns)
+
+if missing:
+    st.error(f"Missing required columns: {missing}")
+    st.stop()
+
+# ---------------------------------------------------------
+# Prepare data safely
 # ---------------------------------------------------------
 df = df.copy()
 
-# Make plant_count numeric and safe
 df["plant_count_clean"] = (
     pd.to_numeric(df["plant_count"], errors="coerce")
     .fillna(0)
 )
 
-# Identify Towers system robustly
 mask_towers = df["system"].astype(str).str.lower().str.contains("tower", na=False)
 
 # ---------------------------------------------------------
-# ===== KPI ROW =====
+# KPI Row
 # ---------------------------------------------------------
 k1, k2, k3 = st.columns(3)
 
-# KPI 1 — Average plants per system (ALL systems)
-avg_plants_all = df["plant_count_clean"].mean()
-
 k1.metric(
     "Avg Recorded Plants (All Systems)",
-    f"{avg_plants_all:,.1f}",
-    help="Average recorded plant count across all systems (descriptive only).",
+    f"{df['plant_count_clean'].mean():.1f}",
 )
 
-# KPI 2 — Avg towers planted (TOWERS only)
 if mask_towers.any():
-    avg_towers = df.loc[mask_towers, "plant_count_clean"].mean()
     k2.metric(
         "Avg Towers Planted (Towers System)",
-        f"{avg_towers:,.1f}",
-        help="Average number of towers planted. Applies only to the Towers system.",
+        f"{df.loc[mask_towers, 'plant_count_clean'].mean():.1f}",
     )
 else:
     k2.metric(
         "Avg Towers Planted (Towers System)",
         "N/A",
-        help="No Towers system data available under current filters.",
     )
 
-# KPI 3 — Max capacity reference
 k3.metric(
     "Towers Capacity (Reference)",
     "24 towers",
-    help="Maximum possible number of towers (reference only).",
 )
 
 # ---------------------------------------------------------
-# ===== Crop / Plant Types =====
+# Crop types
 # ---------------------------------------------------------
-st.markdown("### 🌿 Crop Types Across Systems")
+st.markdown("### Crop Types Across Systems")
 
 if "crop_tokens" in df.columns and df["crop_tokens"].notna().any():
     crop_df = (
@@ -84,54 +85,67 @@ if "crop_tokens" in df.columns and df["crop_tokens"].notna().any():
         y="count",
         color="crop_tokens",
         title="Observed Crop Tokens by System",
-        labels={
-            "count": "Observations",
-            "crop_tokens": "Crop Type",
-            "system": "System",
-        },
     )
 
     st.plotly_chart(fig_crop, use_container_width=True)
-
-    render_chart_conclusion(
-        "Observed crop types by system.",
-        "This view shows which crops appear in each system. Counts reflect observation frequency, not yield.",
-    )
 else:
-    st.info("No crop type data available under current filters.")
+    st.info("No crop data available.")
 
 # ---------------------------------------------------------
-# ===== Avg Plants per System =====
+# Average plants per system
 # ---------------------------------------------------------
-st.markdown("### 📊 Average Recorded Plants per System")
+st.markdown("### Average Recorded Plants per System")
 
 avg_plants_system = (
     df.groupby("system", as_index=False)["plant_count_clean"]
     .mean()
 )
 
-fig_avg_plants = px.bar(
+fig_avg = px.bar(
     avg_plants_system,
     x="system",
     y="plant_count_clean",
     title="Average Recorded Plant Count by System",
-    labels={
-        "plant_count_clean": "Avg Recorded Plants",
-        "system": "System",
-    },
 )
 
-st.plotly_chart(fig_avg_plants, use_container_width=True)
-
-render_chart_conclusion(
-    "Average recorded plant count by system.",
-    "Values are descriptive indicators of planting scale. Recording methods differ across systems.",
-)
+st.plotly_chart(fig_avg, use_container_width=True)
 
 # ---------------------------------------------------------
-# ===== Towers Planted Over Time (TOWERS ONLY) =====
+# Towers planted over time (Towers ONLY)
 # ---------------------------------------------------------
-st.markdown("### 🏗 Towers Planted Over Time (Towers System Only)")
+st.markdown("### Towers Planted Over Time (Towers System Only)")
 
 if mask_towers.any():
     towers_trend = (
+        df.loc[mask_towers]
+        .groupby("observation_date", as_index=False)["plant_count_clean"]
+        .mean()
+    )
+
+    fig_towers = px.line(
+        towers_trend,
+        x="observation_date",
+        y="plant_count_clean",
+        markers=True,
+        title="Towers Planted Over Time",
+    )
+
+    fig_towers.add_hline(
+        y=24,
+        line_dash="dash",
+        annotation_text="Max Capacity (24 towers)",
+    )
+
+    st.plotly_chart(fig_towers, use_container_width=True)
+else:
+    st.info("No Towers system data available under current filters.")
+
+# ---------------------------------------------------------
+# Methodology note
+# ---------------------------------------------------------
+with st.expander("Methodology Note"):
+    st.markdown(
+        "- Plant count values are descriptive and system-specific.\n"
+        "- For the Towers system, plant_count represents the number of towers planted.\n"
+        "- Tower capacity (24 towers) is used as a reference limit only.\n"
+    )
