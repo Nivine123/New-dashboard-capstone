@@ -30,13 +30,15 @@ df = context["df"]
 render_hero(
     "Crop / Plant Insights",
     (
-        "Explore plant count, crop diversity, growth stages, age distributions, and the crop-system combinations "
-        "that appear linked to higher risk or resource intensity. Interpret associations cautiously and avoid causal claims."
+        "Explore plant count, crop diversity, growth stages, age distributions, "
+        "and crop-system combinations. Interpret associations cautiously."
     ),
 )
 
 if df.empty:
-    st.warning("No rows remain after the current filters. Expand the sidebar filters to continue.")
+    st.warning(
+        "No rows remain after the current filters. Expand the sidebar filters to continue."
+    )
     st.stop()
 
 render_comparability_note(context["comparability_note"])
@@ -53,7 +55,11 @@ TOWER_CANDIDATES = [
     "module",
 ]
 
-tower_col = next((c for c in TOWER_CANDIDATES if c in df.columns), None)
+tower_col = None
+for candidate in TOWER_CANDIDATES:
+    if candidate in df.columns:
+        tower_col = candidate
+        break
 
 # --------------------------------------------------
 # Precomputed summaries
@@ -72,18 +78,18 @@ cards = [
     ),
     (
         "Distinct crop combinations",
-        f"{crop_counts['crop_type'].nunique() if not crop_counts.empty else 0}",
-        "Unique crop tokens observed after splitting mixed crop fields.",
+        str(crop_counts["crop_type"].nunique() if not crop_counts.empty else 0),
+        "Unique crop tokens after splitting mixed fields.",
     ),
     (
         "Known plant-name share",
         format_pct(df["plant_name_known_flag"].mean()),
-        "Rows where the plant name is explicit rather than unknown.",
+        "Rows with an explicit plant name.",
     ),
     (
         "Known growth-stage share",
         format_pct(df["growth_stage_known_flag"].mean()),
-        "Rows where growth stage data is sufficient for analysis.",
+        "Rows with usable growth-stage data.",
     ),
 ]
 
@@ -97,17 +103,16 @@ for col, card in zip(card_cols, cards):
 # --------------------------------------------------
 metadata_gap_systems = summary.loc[
     summary[["crop_known_share", "plant_known_share", "growth_known_share"]]
-    .fillna(0)
-    .mean(axis=1)
-    < 0.35,
+        .fillna(0)
+        .mean(axis=1) < 0.35,
     "system",
 ].astype(str).tolist()
 
 if metadata_gap_systems:
     st.info(
-        "Plant-level metadata is sparse for "
+        "Plant-level metadata is limited for "
         + ", ".join(metadata_gap_systems)
-        + ". Treat crop and plant insights as directional rather than definitive."
+        + ". Interpret crop insights cautiously."
     )
 
 # --------------------------------------------------
@@ -133,30 +138,18 @@ with left:
     )
 
     fig.update_layout(template="plotly_white", showlegend=False)
-
     st.plotly_chart(fig, use_container_width=True)
 
     render_chart_conclusion(
         "Average recorded plant count by system.",
-        "Plant counts provide scale context but should not be read as productivity measures."
+        "Plant counts provide scale context only."
     )
 
 with right:
     if crop_counts.empty:
-        st.info("No crop tokens remain after the current filters.")
+        st.info("No crop tokens remain after filtering.")
     else:
         st.plotly_chart(crop_heatmap(crop_counts), use_container_width=True)
-        render_chart_conclusion(
-            "Crop-token counts across systems.",
-            "Crop mix explains why some systems are not perfectly comparable."
-        )
-
-if not crop_counts.empty:
-    st.plotly_chart(crop_sunburst_chart(crop_counts), use_container_width=True)
-    render_chart_conclusion(
-        "Crop distribution nested by system.",
-        "The sunburst highlights concentration versus diversity across systems."
-    )
 
 # --------------------------------------------------
 # Growth stage and age
@@ -164,36 +157,30 @@ if not crop_counts.empty:
 stage_left, stage_right = st.columns(2, gap="large")
 
 with stage_left:
-    growth_stage_df = (
+    stage_df = (
         df[df["growth_stage_known_flag"]]
         .groupby(["system", "growth_stage"], as_index=False)
         .size()
         .rename(columns={"size": "count"})
     )
 
-    if growth_stage_df.empty:
-        st.info("Growth-stage fields are too sparse for the current filter scope.")
+    if stage_df.empty:
+        st.info("Growth-stage data is too sparse.")
     else:
         stage_fig = px.bar(
-            growth_stage_df,
+            stage_df,
             x="system",
             y="count",
             color="growth_stage",
             title="Growth-stage distribution",
         )
-
         st.plotly_chart(stage_fig, use_container_width=True)
-
-        render_chart_conclusion(
-            "Growth-stage mix by system.",
-            "Stage composition affects demand and risk and should be considered in comparisons."
-        )
 
 with stage_right:
     age_df = df[df["age_days"].notna()]
 
     if age_df.empty:
-        st.info("Age data is not available for the current filter scope.")
+        st.info("Age data is not available.")
     else:
         st.plotly_chart(
             histogram_chart(
@@ -206,13 +193,8 @@ with stage_right:
             use_container_width=True,
         )
 
-        render_chart_conclusion(
-            "Age distribution where available.",
-            "Age spread provides lifecycle context but should remain descriptive."
-        )
-
 # --------------------------------------------------
-# ✅ Planting behavior over time (tower‑aware)
+# Planting behavior over time (tower-aware)
 # --------------------------------------------------
 st.markdown("### Planting behavior over time")
 
@@ -225,7 +207,7 @@ if tower_col is None:
     )
 
     if planting_df.empty:
-        st.info("Plant-count data is not sufficient for a time trend.")
+        st.info("Insufficient plant-count data for time trend.")
     else:
         fig = px.line(
             planting_df,
@@ -235,12 +217,11 @@ if tower_col is None:
             markers=True,
             title="Plant-count trend by system",
         )
-
         st.plotly_chart(fig, use_container_width=True)
 
         render_chart_conclusion(
             "Plant-count trend by system.",
-            "Tower-level data is not available, so trends represent system averages."
+            "Tower-level detail is not available in this dataset."
         )
 
 else:
@@ -255,10 +236,62 @@ else:
     )
 
     if planting_df.empty:
-        st.info("Plant-count data is not sufficient for a time trend.")
+        st.info("Insufficient plant-count data for time trend.")
     else:
         fig = px.line(
             planting_df,
             x="observation_date",
             y="average_plant_count",
             color="system",
+            line_group=tower_col,
+            hover_data=[tower_col],
+            title="Plant-count trend by tower and system",
+        )
+
+        fig.update_traces(opacity=0.35)
+        st.plotly_chart(fig, use_container_width=True)
+
+        render_chart_conclusion(
+            "Plant-count trend by tower and system.",
+            "Each line represents one tower."
+        )
+
+# --------------------------------------------------
+# Crop-system associations
+# --------------------------------------------------
+st.markdown("### Crop-system associations")
+
+rows = []
+exploded = df.explode("crop_tokens")
+exploded = exploded[
+    exploded["crop_tokens"].notna() & exploded["crop_tokens"].ne("")
+]
+
+for (system, crop), group in exploded.groupby(["system", "crop_tokens"]):
+    if len(group) < 5:
+        continue
+
+    rows.append(
+        {
+            "System": system,
+            "Crop": crop,
+            "Observations": len(group),
+            "Issue incidence": group["issue_incident_flag"].mean(),
+            "Median water use (L)": group["water_use_l"].median(),
+        }
+    )
+
+assoc_df = pd.DataFrame(rows)
+
+if assoc_df.empty:
+    st.info("No crop-system combinations meet the evidence threshold.")
+else:
+    st.dataframe(assoc_df, use_container_width=True, hide_index=True)
+
+with st.expander("Interpretation caution"):
+    st.markdown(
+        """
+        - Patterns shown are associations, not causal relationships.
+        - Plant-count and crop metadata coverage varies by system and tower.
+        """
+    )
