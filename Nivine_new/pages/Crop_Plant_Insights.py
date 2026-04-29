@@ -7,7 +7,12 @@ import plotly.express as px
 import streamlit as st
 
 from utils.charts import crop_heatmap, crop_sunburst_chart, histogram_chart
-from utils.metrics import compute_crop_counts, compute_system_summary, format_num, format_pct
+from utils.metrics import (
+    compute_crop_counts,
+    compute_system_summary,
+    format_num,
+    format_pct,
+)
 from utils.ui import (
     build_page_context,
     render_chart_conclusion,
@@ -16,14 +21,17 @@ from utils.ui import (
     render_metric_card,
 )
 
+# --------------------------------------------------
+# Context + hero
+# --------------------------------------------------
 context = build_page_context("Crop / Plant Insights")
 df = context["df"]
 
 render_hero(
     "Crop / Plant Insights",
     (
-        "Explore plant count, crop diversity, growth stages, age distributions, and the crop-system combinations that appear linked "
-        "to higher risk or resource intensity. Interpret associations cautiously and avoid causal claims."
+        "Explore plant count, crop diversity, growth stages, age distributions, and the crop-system combinations "
+        "that appear linked to higher risk or resource intensity. Interpret associations cautiously and avoid causal claims."
     ),
 )
 
@@ -33,9 +41,15 @@ if df.empty:
 
 render_comparability_note(context["comparability_note"])
 
+# --------------------------------------------------
+# Pre-computed views
+# --------------------------------------------------
 summary = compute_system_summary(df)
 crop_counts = compute_crop_counts(df)
 
+# --------------------------------------------------
+# KPI cards
+# --------------------------------------------------
 cards = [
     (
         "Average recorded plant count",
@@ -60,10 +74,13 @@ cards = [
 ]
 
 card_cols = st.columns(4, gap="medium")
-for column, card in zip(card_cols, cards):
-    with column:
+for col, card in zip(card_cols, cards):
+    with col:
         render_metric_card(*card)
 
+# --------------------------------------------------
+# Metadata gap warning
+# --------------------------------------------------
 metadata_gap_systems = summary.loc[
     summary[["crop_known_share", "plant_known_share", "growth_known_share"]]
     .fillna(0)
@@ -74,31 +91,29 @@ metadata_gap_systems = summary.loc[
 
 if metadata_gap_systems:
     st.info(
-        "Plant-level metadata is limited for "
+        "Plant-level metadata is sparse for "
         + ", ".join(metadata_gap_systems)
-        + ". This may result in missing or incomplete plant-count and crop-level insights for these systems. Interpret results with caution."
+        + ". Treat those crop insights as directional rather than definitive."
     )
 
+# --------------------------------------------------
+# Plant count + crop mix
+# --------------------------------------------------
 st.markdown("### Plant count and crop mix")
 
 plant_left, plant_right = st.columns(2, gap="large")
 
 with plant_left:
-    plant_df = pd.read_csv("greenhouse_systems_cleaned.csv")
-
     plant_count_view = (
-        plant_df.groupby("system", as_index=False)
-        .agg(
-            average_plant_count=("plant_count", "mean"),
-            plant_count_records=("plant_count", "count"),
-        )
+        df.groupby("system", as_index=False)["plant_count"]
+        .mean()
+        .rename(columns={"plant_count": "average_plant_count"})
     )
 
     plant_fig = px.bar(
         plant_count_view,
         x="system",
         y="average_plant_count",
-        text="plant_count_records",
         title="Average plant count by system",
         color="system",
     )
@@ -110,30 +125,33 @@ with plant_left:
         showlegend=False,
     )
 
-    st.plotly_chart(plant_fig, width="stretch")
+    st.plotly_chart(plant_fig, use_container_width=True)
 
     render_chart_conclusion(
         "Average recorded plant count by system.",
-        "Plant-count values are calculated from the full cleaned dataset because plant metadata should not be filtered using water-analysis readiness criteria.",
+        "Plant-count differences provide scale context, but should not be treated as productivity measures unless coverage is consistent.",
     )
 
 with plant_right:
     if crop_counts.empty:
         st.info("No crop tokens remain after the current filters.")
     else:
-        st.plotly_chart(crop_heatmap(crop_counts), width="stretch")
+        st.plotly_chart(crop_heatmap(crop_counts), use_container_width=True)
         render_chart_conclusion(
             "Crop-token counts across systems.",
             "Crop mix explains why some system comparisons are not perfectly like-for-like.",
         )
 
 if not crop_counts.empty:
-    st.plotly_chart(crop_sunburst_chart(crop_counts), width="stretch")
+    st.plotly_chart(crop_sunburst_chart(crop_counts), use_container_width=True)
     render_chart_conclusion(
         "Crop hierarchy nested by system.",
-        "The sunburst makes crop concentration visible and helps separate broad crop diversity from system-specific crop focus.",
+        "The sunburst highlights crop concentration versus system-wide diversity.",
     )
 
+# --------------------------------------------------
+# Growth stage + age
+# --------------------------------------------------
 stage_left, stage_right = st.columns(2, gap="large")
 
 with stage_left:
@@ -161,11 +179,11 @@ with stage_left:
             plot_bgcolor="rgba(255,255,255,0.88)",
         )
 
-        st.plotly_chart(stage_fig, width="stretch")
+        st.plotly_chart(stage_fig, use_container_width=True)
 
         render_chart_conclusion(
             "Growth-stage distribution by system.",
-            "Uneven growth-stage mix can affect water demand and risk, so it should be considered before comparing systems directly.",
+            "Uneven growth-stage mix affects demand and risk; comparisons should control for stage composition.",
         )
 
 with stage_right:
@@ -182,19 +200,25 @@ with stage_right:
                 title="Age distribution by system",
                 bins=20,
             ),
-            width="stretch",
+            use_container_width=True,
         )
 
         render_chart_conclusion(
-            "Age distribution of plants where age is available.",
-            "Age spread provides lifecycle context; sparse or single-system age data should stay descriptive.",
+            "Age distribution where available.",
+            "Age spread provides lifecycle context; sparse age data should remain descriptive.",
         )
 
+# --------------------------------------------------
+# ✅ Planting behavior over time — TOWERS VISIBLE
+# --------------------------------------------------
 st.markdown("### Planting behavior over time")
 
 planting_df = (
     df[df["plant_count"].notna()]
-    .groupby(["system", "observation_date"], as_index=False)["plant_count"]
+    .groupby(
+        ["system", "tower", "observation_date"],
+        as_index=False,
+    )["plant_count"]
     .mean()
     .rename(columns={"plant_count": "average_plant_count"})
 )
@@ -207,8 +231,9 @@ else:
         x="observation_date",
         y="average_plant_count",
         color="system",
-        markers=True,
-        title="Plant-count trend by system",
+        line_group="tower",
+        hover_data=["tower"],
+        title="Plant-count trend by tower and system",
     )
 
     planting_fig.update_layout(
@@ -217,23 +242,30 @@ else:
         plot_bgcolor="rgba(255,255,255,0.88)",
     )
 
-    st.plotly_chart(planting_fig, width="stretch")
+    planting_fig.update_traces(opacity=0.35)
+
+    st.plotly_chart(planting_fig, use_container_width=True)
 
     render_chart_conclusion(
-        "Plant-count trend through time by system.",
-        "Changes in plant count can explain shifts in water use or workload, especially around planting and harvest periods.",
+        "Plant-count trend by tower and system.",
+        "Each line represents a single tower. Sudden shifts often reflect tower-level planting, harvest, or data dropouts rather than system-wide change.",
     )
 
+# --------------------------------------------------
+# Crop-system associations
+# --------------------------------------------------
 st.markdown("### Crop-system associations")
 
 crop_assoc_rows = []
+
 exploded_crop_df = df.explode("crop_tokens")
 exploded_crop_df = exploded_crop_df[
-    exploded_crop_df["crop_tokens"].notna() & exploded_crop_df["crop_tokens"].ne("")
+    exploded_crop_df["crop_tokens"].notna()
+    & exploded_crop_df["crop_tokens"].ne("")
 ]
 
 for (system, crop_type), group in exploded_crop_df.groupby(["system", "crop_tokens"]):
-    if not crop_type or len(group) < 5:
+    if len(group) < 5:
         continue
 
     crop_assoc_rows.append(
@@ -249,29 +281,28 @@ for (system, crop_type), group in exploded_crop_df.groupby(["system", "crop_toke
                 group["water_use_l"].notna(), "water_use_l"
             ].median(),
             "Interpretation": (
-                "Association only; this pattern may reflect crop mix, stage, or operating conditions rather than a crop effect."
+                "Association only; patterns may reflect crop mix, growth stage, or operating conditions."
             ),
         }
     )
 
 crop_assoc_df = (
-    pd.DataFrame(crop_assoc_rows).sort_values(
-        ["Issue incidence", "Observations"], ascending=[False, False]
-    )
+    pd.DataFrame(crop_assoc_rows)
+    .sort_values(["Issue incidence", "Observations"], ascending=[False, False])
     if crop_assoc_rows
     else pd.DataFrame()
 )
 
 if crop_assoc_df.empty:
-    st.info("No crop-system combinations meet the minimum evidence threshold of five observations.")
+    st.info("No crop-system combinations meet the minimum evidence threshold.")
 else:
-    st.dataframe(crop_assoc_df, width="stretch", hide_index=True)
+    st.dataframe(crop_assoc_df, use_container_width=True, hide_index=True)
 
 with st.expander("Interpretation caution", expanded=False):
     st.markdown(
         """
-        - Crop and plant patterns should be read as observed associations, not causal relationships.
-        - Plant-count coverage is uneven across systems, so the dashboard avoids per-plant productivity claims.
-        - Hydroponic systems contain much weaker plant-name and growth-stage coverage than the Conventional system, which limits direct crop-level comparison.
+        - Crop and plant patterns are observational, not causal.
+        - Plant-count coverage varies by system and tower.
+        - Hydroponic systems show weaker plant-name and growth-stage coverage than Conventional systems.
         """
     )
