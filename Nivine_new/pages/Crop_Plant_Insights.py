@@ -81,13 +81,31 @@ if metadata_gap_systems:
 st.markdown("### Plant count and crop mix")
 plant_left, plant_right = st.columns(2, gap="large")
 with plant_left:
-    plant_count_view = (
-    df[df["plant_count"].notna()]
-    .groupby("system", as_index=False)
+    # Ensure all systems appear (even if plant_count is missing)
+    all_systems = pd.DataFrame({
+     "system": sorted(df["system"].dropna().unique())
+})
+
+plant_count_summary = (
+    df.groupby("system", as_index=False)
     .agg(
         average_plant_count=("plant_count", "mean"),
         plant_count_records=("plant_count", "count"),
     )
+)
+
+plant_count_view = all_systems.merge(
+    plant_count_summary,
+    on="system",
+    how="left"
+)
+
+# Display fix (show 0 when missing, but keep real data internally)
+plant_count_view["average_plant_count_display"] = (
+    plant_count_view["average_plant_count"].fillna(0)
+)
+plant_count_view["plant_count_records"] = (
+    plant_count_view["plant_count_records"].fillna(0).astype(int)
 )
     plant_fig = px.bar(
         plant_count_view,
