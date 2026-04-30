@@ -151,7 +151,7 @@ with plant_left:
         x="system",
         y="planting_scale_value",
         text="metric_used",
-        title="Planting scale by system (plants vs active towers)"
+        title="Planting scale by system (plants vs active towers)",
         color="system",
         hover_data=["records", "metric_used", "interpretation_unit"],
     )
