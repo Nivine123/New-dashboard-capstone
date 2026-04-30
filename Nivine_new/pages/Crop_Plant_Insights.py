@@ -151,7 +151,7 @@ with plant_left:
         x="system",
         y="planting_scale_value",
         text="metric_used",
-        title="Recorded planting scale by system",
+        title="Planting scale by system (plants vs active towers)"
         color="system",
         hover_data=["records", "metric_used", "interpretation_unit"],
     )
@@ -161,7 +161,7 @@ with plant_left:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(255,255,255,0.88)",
         showlegend=False,
-        yaxis_title="Recorded planting scale",
+        yaxis_title="Plant count / Active towers",
         xaxis_title="System",
     )
 
