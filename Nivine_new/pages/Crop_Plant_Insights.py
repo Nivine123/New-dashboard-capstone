@@ -105,21 +105,55 @@ with plant_left:
         )
         plant_df = df.copy()
 
-    plant_count_view = (
-        plant_df.groupby("system", as_index=False)
-        .agg(
-            average_plant_count=("plant_count", "mean"),
-            plant_count_records=("plant_count", "count"),
-        )
-    )
+    rows = []
+
+    for system, group in plant_df.groupby("system"):
+        valid_counts = group["plant_count"].dropna()
+
+        if valid_counts.empty:
+            rows.append(
+                {
+                    "system": system,
+                    "planting_scale_value": 0,
+                    "records": 0,
+                    "metric_used": "No plant-count data",
+                    "interpretation_unit": "Missing data",
+                }
+            )
+            continue
+
+        if system == "Tower":
+            active_towers = valid_counts.max()
+            rows.append(
+                {
+                    "system": system,
+                    "planting_scale_value": active_towers,
+                    "records": valid_counts.count(),
+                    "metric_used": "Maximum active towers",
+                    "interpretation_unit": "Active towers",
+                }
+            )
+        else:
+            rows.append(
+                {
+                    "system": system,
+                    "planting_scale_value": valid_counts.mean(),
+                    "records": valid_counts.count(),
+                    "metric_used": "Average recorded plant count",
+                    "interpretation_unit": "Plants",
+                }
+            )
+
+    plant_count_view = pd.DataFrame(rows)
 
     plant_fig = px.bar(
         plant_count_view,
         x="system",
-        y="average_plant_count",
-        text="plant_count_records",
-        title="Average plant count by system",
+        y="planting_scale_value",
+        text="metric_used",
+        title="Recorded planting scale by system",
         color="system",
+        hover_data=["records", "metric_used", "interpretation_unit"],
     )
 
     plant_fig.update_layout(
@@ -127,13 +161,17 @@ with plant_left:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(255,255,255,0.88)",
         showlegend=False,
+        yaxis_title="Recorded planting scale",
+        xaxis_title="System",
     )
+
+    plant_fig.update_traces(textposition="outside")
 
     st.plotly_chart(plant_fig, width="stretch")
 
     render_chart_conclusion(
-        "Average recorded plant count by system.",
-        "Plant-count values are calculated from the full cleaned dataset when available, because plant metadata should not be filtered using water-analysis readiness criteria.",
+        "Recorded planting scale by system.",
+        "For A-shape + Gutters and Conventional systems, values represent average recorded plant counts. For the Tower system, the value represents the maximum observed number of active towers, since tower records capture active tower units over time rather than individual plants."
     )
 
 with plant_right:
